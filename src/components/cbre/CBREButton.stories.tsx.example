@@ -1,0 +1,122 @@
+import type { Meta, StoryObj } from '@storybook/react';
+import { CBREButton } from './CBREButton';
+
+/**
+ * The CBREButton component is a styled button that follows CBRE design guidelines.
+ * It offers different variants such as primary, secondary, outline, view-more, and text.
+ */
+const meta: Meta<typeof CBREButton> = {
+  title: 'CBRE/Buttons/CBREButton',
+  component: CBREButton,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['primary', 'secondary', 'outline', 'view-more', 'text'],
+      description: 'The visual style of the button',
+      defaultValue: 'primary',
+    },
+    size: {
+      control: 'select',
+      options: ['default', 'sm', 'lg'],
+      description: 'The size of the button',
+    },
+    disabled: {
+      control: 'boolean',
+      description: 'Whether the button is disabled',
+    },
+    children: {
+      control: 'text',
+      description: 'Button content',
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof CBREButton>;
+
+/**
+ * Primary variant - Used for main call-to-action buttons
+ */
+export const Primary: Story = {
+  args: {
+    variant: 'primary',
+    children: 'Primary Button',
+  },
+};
+
+/**
+ * Secondary variant - Used for secondary actions
+ */
+export const Secondary: Story = {
+  args: {
+    variant: 'secondary',
+    children: 'Secondary Button',
+  },
+};
+
+/**
+ * Outline variant - Used for less prominent actions
+ */
+export const Outline: Story = {
+  args: {
+    variant: 'outline',
+    children: 'Outline Button',
+  },
+};
+
+/**
+ * View More variant - Used for "learn more" or similar actions
+ */
+export const ViewMore: Story = {
+  args: {
+    variant: 'view-more',
+    children: 'View More',
+  },
+};
+
+/**
+ * Text variant - Used for link-like buttons
+ */
+export const Text: Story = {
+  args: {
+    variant: 'text',
+    children: 'Text Button',
+  },
+};
+
+/**
+ * Disabled state
+ */
+export const Disabled: Story = {
+  args: {
+    variant: 'primary',
+    children: 'Disabled Button',
+    disabled: true,
+  },
+};
+
+/**
+ * Small size variant
+ */
+export const Small: Story = {
+  args: {
+    variant: 'primary',
+    children: 'Small Button',
+    size: 'sm',
+  },
+};
+
+/**
+ * Large size variant
+ */
+export const Large: Story = {
+  args: {
+    variant: 'primary',
+    children: 'Large Button',
+    size: 'lg',
+  },
+}; 
