@@ -61,15 +61,23 @@ function DealsPageContent() {
                 )}
               </div>
               
-              {/* Right: Refresh Button */}
-              <CBRE.CBREButton 
-                variant="outline" 
-                onClick={refresh}
-                disabled={loading}
-                className="flex-shrink-0"
-              >
-                Refresh
-              </CBRE.CBREButton>
+              {/* Right: Action Buttons */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <a 
+                  href="/admin"
+                  className="text-sm text-gray-600 hover:text-[#003F2D] font-medium"
+                >
+                  Admin
+                </a>
+                <CBRE.CBREButton 
+                  variant="outline" 
+                  onClick={refresh}
+                  disabled={loading}
+                  className="flex-shrink-0"
+                >
+                  Refresh
+                </CBRE.CBREButton>
+              </div>
             </div>
           </div>
         </div>

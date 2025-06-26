@@ -6,7 +6,6 @@ export interface Deal {
   property_image_url: string | null
   country: 'Japan' | 'Korea' | 'Taiwan' | 'Hong Kong' | 'China' | 'Singapore' | 'Maldives' | 'Australia'
   deal_price_usd: number // in millions
-  deal_price_sgd: number // in millions SGD
   local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
   local_currency_amount: number // in millions (or appropriate unit for currency)
   asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
@@ -26,7 +25,7 @@ export interface FilterState {
   priceRange: {
     min: number | null
     max: number | null
-    currency: 'USD' | 'SGD'
+    currency: 'USD'
   }
   dateRange: {
     startQuarter: string | null
@@ -73,7 +72,8 @@ export const QUARTERS = [
   'Q1 2021', 'Q2 2021', 'Q3 2021', 'Q4 2021',
   'Q1 2022', 'Q2 2022', 'Q3 2022', 'Q4 2022',
   'Q1 2023', 'Q2 2023', 'Q3 2023', 'Q4 2023',
-  'Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024'
+  'Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024',
+  'Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025'
 ]
 
 export const COUNTRY_FLAGS: Record<Country, string> = {
@@ -129,7 +129,6 @@ export interface CreateDealData {
   property_image_url?: string
   country: Country
   deal_price_usd: number
-  deal_price_sgd: number
   local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
   local_currency_amount: number
   asset_class: AssetClass
