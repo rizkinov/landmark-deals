@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef } from 'react'
 import * as CBRE from '../../../src/components/cbre'
 import { 
   DownloadIcon, 
@@ -7,8 +8,89 @@ import {
   PersonIcon,
   CheckCircledIcon 
 } from '@radix-ui/react-icons'
+import { fetchDeals, createDeal } from '../../../src/lib/supabase'
+import { exportDealsToCSV, downloadCSV, parseCSVToDeals, generateCSVTemplate } from '../../../src/lib/csv-utils'
 
 export default function AdminSettingsPage() {
+  const [loading, setLoading] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleExportCSV = async () => {
+    setLoading(true)
+    try {
+      const deals = await fetchDeals()
+      const csvContent = exportDealsToCSV(deals)
+      const timestamp = new Date().toISOString().split('T')[0]
+      downloadCSV(csvContent, `landmark-deals-export-${timestamp}.csv`)
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+      alert('Error exporting data. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleImportCSV = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.csv')) {
+      alert('Please select a CSV file')
+      return
+    }
+
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const deals = parseCSVToDeals(text)
+      
+      if (deals.length === 0) {
+        alert('No valid deals found in CSV file')
+        return
+      }
+
+      const confirmMessage = `Found ${deals.length} deals in CSV. Do you want to import them?`
+      if (!confirm(confirmMessage)) {
+        return
+      }
+
+      let imported = 0
+      let errors = 0
+
+      for (const deal of deals) {
+        try {
+          await createDeal(deal)
+          imported++
+        } catch (error) {
+          console.error('Error importing deal:', deal.property_name, error)
+          errors++
+        }
+      }
+
+      alert(`Import completed!\nImported: ${imported} deals\nErrors: ${errors} deals`)
+      
+    } catch (error) {
+      console.error('Error importing CSV:', error)
+      alert('Error importing CSV file. Please check the format and try again.')
+    } finally {
+      setImporting(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleDownloadTemplate = () => {
+    const template = generateCSVTemplate()
+    downloadCSV(template, 'deals-import-template.csv')
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -66,9 +148,15 @@ export default function AdminSettingsPage() {
               <p className="text-sm text-gray-600 mb-3">
                 Download all deals data as CSV file
               </p>
-              <CBRE.CBREButton variant="outline" size="sm" className="gap-2">
+              <CBRE.CBREButton 
+                variant="outline" 
+                size="sm" 
+                className="gap-2"
+                onClick={handleExportCSV}
+                disabled={loading}
+              >
                 <DownloadIcon className="w-4 h-4" />
-                Export CSV
+                {loading ? 'Exporting...' : 'Export CSV'}
               </CBRE.CBREButton>
             </div>
             <div>
@@ -78,10 +166,36 @@ export default function AdminSettingsPage() {
               <p className="text-sm text-gray-600 mb-3">
                 Upload deals from CSV file
               </p>
-              <CBRE.CBREButton variant="outline" size="sm" className="gap-2">
-                <UploadIcon className="w-4 h-4" />
-                Import CSV
-              </CBRE.CBREButton>
+              <div className="space-y-2">
+                <CBRE.CBREButton 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={handleImportCSV}
+                  disabled={importing}
+                >
+                  <UploadIcon className="w-4 h-4" />
+                  {importing ? 'Importing...' : 'Import CSV'}
+                </CBRE.CBREButton>
+                <CBRE.CBREButton 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 text-xs"
+                  onClick={handleDownloadTemplate}
+                >
+                  <DownloadIcon className="w-3 h-3" />
+                  Download Template
+                </CBRE.CBREButton>
+              </div>
+              
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".csv"
+                style={{ display: 'none' }}
+              />
             </div>
           </div>
         </CBRE.CBRECard>
