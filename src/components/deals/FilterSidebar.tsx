@@ -233,46 +233,52 @@ export function FilterSidebar({ filters, onFilterChange, onClearFilters, loading
           <Label className="text-sm font-medium text-gray-700 mb-3 block">
             Date Range {(filters.dateRange.startQuarter || filters.dateRange.endQuarter) && '(1)'}
           </Label>
-          <div className="space-y-2">
-            <Select
-              value={filters.dateRange.startQuarter || 'any'}
-              onValueChange={(value: string) => onFilterChange('dateRange', {
-                ...filters.dateRange,
-                startQuarter: value === 'any' ? null : value
-              })}
-            >
-              <SelectTrigger className="text-xs h-8">
-                <SelectValue placeholder="From..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any" className="text-xs">Any</SelectItem>
-                {QUARTERS.map((quarter) => (
-                  <SelectItem key={quarter} value={quarter} className="text-xs">
-                    {quarter}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-3">
+            <div>
+              <div className="text-xs text-gray-600 mb-1">From</div>
+              <Select
+                value={filters.dateRange.startQuarter || 'any'}
+                onValueChange={(value: string) => onFilterChange('dateRange', {
+                  ...filters.dateRange,
+                  startQuarter: value === 'any' ? null : value
+                })}
+              >
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue placeholder="Select start date..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any" className="text-xs">Any</SelectItem>
+                  {QUARTERS.map((quarter) => (
+                    <SelectItem key={quarter} value={quarter} className="text-xs">
+                      {quarter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select
-              value={filters.dateRange.endQuarter || 'any'}
-              onValueChange={(value: string) => onFilterChange('dateRange', {
-                ...filters.dateRange,
-                endQuarter: value === 'any' ? null : value
-              })}
-            >
-              <SelectTrigger className="text-xs h-8">
-                <SelectValue placeholder="To..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any" className="text-xs">Any</SelectItem>
-                {QUARTERS.map((quarter) => (
-                  <SelectItem key={quarter} value={quarter} className="text-xs">
-                    {quarter}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <div className="text-xs text-gray-600 mb-1">To</div>
+              <Select
+                value={filters.dateRange.endQuarter || 'any'}
+                onValueChange={(value: string) => onFilterChange('dateRange', {
+                  ...filters.dateRange,
+                  endQuarter: value === 'any' ? null : value
+                })}
+              >
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue placeholder="Select end date..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any" className="text-xs">Any</SelectItem>
+                  {QUARTERS.map((quarter) => (
+                    <SelectItem key={quarter} value={quarter} className="text-xs">
+                      {quarter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
