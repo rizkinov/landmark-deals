@@ -20,7 +20,35 @@ import {
 function DealThumbnail({ imageUrl, propertyName }: { imageUrl: string | null, propertyName: string }) {
   const [imgError, setImgError] = useState(false)
   const [imgLoading, setImgLoading] = useState(true)
-  const [imgSrc, setImgSrc] = useState(imageUrl || '/default-photo.jpeg')
+  
+  // Determine the source URL to use
+  const getImageSrc = () => {
+    if (!imageUrl || imageUrl === '') {
+      return '/default-photo.jpeg'
+    }
+    // Handle blob URLs from development uploads
+    if (imageUrl.startsWith('blob:')) {
+      return imageUrl
+    }
+    // Handle relative paths
+    if (imageUrl.startsWith('/')) {
+      return imageUrl
+    }
+    // Handle full URLs
+    return imageUrl
+  }
+
+  const [imgSrc, setImgSrc] = useState(getImageSrc())
+
+  // Update image source when imageUrl prop changes
+  useEffect(() => {
+    const newSrc = getImageSrc()
+    if (newSrc !== imgSrc) {
+      setImgSrc(newSrc)
+      setImgLoading(true)
+      setImgError(false)
+    }
+  }, [imageUrl, imgSrc])
 
   const handleImageError = () => {
     setImgLoading(false)
@@ -37,6 +65,7 @@ function DealThumbnail({ imageUrl, propertyName }: { imageUrl: string | null, pr
     setImgError(false)
   }
 
+  // If all loading attempts failed, show icon
   if (imgError) {
     return (
       <div className="flex-shrink-0 h-10 w-10">
@@ -50,8 +79,8 @@ function DealThumbnail({ imageUrl, propertyName }: { imageUrl: string | null, pr
   return (
     <div className="flex-shrink-0 h-10 w-10 relative">
       {imgLoading && (
-        <div className="absolute inset-0 bg-gray-100 rounded flex items-center justify-center border border-gray-200">
-          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 bg-gray-100 rounded flex items-center justify-center border border-gray-200 z-10">
+          <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
       <img
