@@ -63,12 +63,15 @@ function DealsPageContent() {
               
               {/* Right: Action Buttons */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <a 
-                  href="/admin"
-                  className="text-sm text-gray-600 hover:text-[#003F2D] font-medium"
+                <CBRE.CBREButton 
+                  variant="action"
+                  asChild
+                  className="flex-shrink-0"
                 >
-                  Admin
-                </a>
+                  <a href="/admin">
+                    Admin
+                  </a>
+                </CBRE.CBREButton>
                 <CBRE.CBREButton 
                   variant="outline" 
                   onClick={refresh}
