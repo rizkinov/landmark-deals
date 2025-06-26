@@ -16,6 +16,55 @@ import {
   ExclamationTriangleIcon
 } from '@radix-ui/react-icons'
 
+// Thumbnail component with proper error handling
+function DealThumbnail({ imageUrl, propertyName }: { imageUrl: string | null, propertyName: string }) {
+  const [imgError, setImgError] = useState(false)
+  const [imgLoading, setImgLoading] = useState(true)
+  const [imgSrc, setImgSrc] = useState(imageUrl || '/default-photo.jpeg')
+
+  const handleImageError = () => {
+    setImgLoading(false)
+    if (imgSrc !== '/default-photo.jpeg') {
+      setImgSrc('/default-photo.jpeg')
+      setImgLoading(true) // Try loading the default image
+    } else {
+      setImgError(true)
+    }
+  }
+
+  const handleImageLoad = () => {
+    setImgLoading(false)
+    setImgError(false)
+  }
+
+  if (imgError) {
+    return (
+      <div className="flex-shrink-0 h-10 w-10">
+        <div className="h-10 w-10 bg-gray-200 rounded flex items-center justify-center border border-gray-200">
+          <HomeIcon className="w-5 h-5 text-gray-500" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-shrink-0 h-10 w-10 relative">
+      {imgLoading && (
+        <div className="absolute inset-0 bg-gray-100 rounded flex items-center justify-center border border-gray-200">
+          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+      <img
+        className={`h-10 w-10 rounded object-cover border border-gray-200 ${imgLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+        src={imgSrc}
+        alt={propertyName}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+      />
+    </div>
+  )
+}
+
 export default function AdminDealsPage() {
   const [deals, setDeals] = useState<Deal[]>([])
   const [filteredDeals, setFilteredDeals] = useState<Deal[]>([])
@@ -144,19 +193,11 @@ export default function AdminDealsPage() {
                 <tr key={deal.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        {deal.property_image_url ? (
-                          <img
-                            className="h-10 w-10 rounded object-cover"
-                            src={deal.property_image_url}
-                            alt={deal.property_name}
-                          />
-                        ) : (
-                          <div className="h-10 w-10 bg-gray-200 rounded flex items-center justify-center">
-                            <HomeIcon className="w-5 h-5 text-gray-500" />
-                          </div>
-                        )}
-                      </div>
+                      <DealThumbnail 
+                        imageUrl={deal.property_image_url} 
+                        propertyName={deal.property_name}
+                      />
+                      
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
                           {deal.property_name}
