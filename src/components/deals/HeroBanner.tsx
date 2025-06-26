@@ -52,7 +52,7 @@ export function HeroBanner() {
                 <div className="border-t-[3px] border-white pt-6">
                   <div className="text-white text-right">
                     <div className="text-sm md:text-base font-light mb-2 opacity-80">
-                      2018 - 2024
+                      2018 - 2025
                     </div>
                     <div className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-financier">
                       Landmark<br />Deals
