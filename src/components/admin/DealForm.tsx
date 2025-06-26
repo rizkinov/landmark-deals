@@ -371,22 +371,22 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="SGD">SGD</SelectItem>
-                <SelectItem value="AUD">AUD</SelectItem>
-                <SelectItem value="JPY">JPY</SelectItem>
-                <SelectItem value="HKD">HKD</SelectItem>
-                <SelectItem value="CNY">CNY</SelectItem>
-                <SelectItem value="KRW">KRW</SelectItem>
-                <SelectItem value="TWD">TWD</SelectItem>
-                <SelectItem value="MVR">MVR</SelectItem>
+                <SelectItem value="USD">USD (Millions)</SelectItem>
+                <SelectItem value="SGD">SGD (Millions)</SelectItem>
+                <SelectItem value="AUD">AUD (Millions)</SelectItem>
+                <SelectItem value="JPY">JPY (Billions)</SelectItem>
+                <SelectItem value="HKD">HKD (Millions)</SelectItem>
+                <SelectItem value="CNY">CNY (Millions)</SelectItem>
+                <SelectItem value="KRW">KRW (Billions)</SelectItem>
+                <SelectItem value="TWD">TWD (Millions)</SelectItem>
+                <SelectItem value="MVR">MVR (Millions)</SelectItem>
               </SelectContent>
             </CBRE.CBRESelect>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Local Currency Amount
+              Local Currency Amount ({formData.local_currency === 'JPY' || formData.local_currency === 'KRW' ? 'Billions' : 'Millions'})
             </label>
             <input
               type="number"
