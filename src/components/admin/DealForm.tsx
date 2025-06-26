@@ -12,7 +12,7 @@ import {
   SelectValue 
 } from '../ui/select'
 import { UploadIcon, ImageIcon, TrashIcon } from '@radix-ui/react-icons'
-// import { uploadPropertyImage } from '../../lib/storage'
+import { uploadPropertyImage } from '../../lib/storage'
 
 interface DealFormProps {
   deal?: Deal | null
@@ -149,18 +149,17 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     setUploading(true)
     
     try {
-      // For development: Create a local URL preview
-      const imageUrl = URL.createObjectURL(file)
-      handleInputChange('property_image_url', imageUrl)
-      
-      // For production: Upload to Supabase Storage
-      // Uncomment the following lines when Supabase Storage is configured:
-      // const uploadedUrl = await uploadPropertyImage(file)
-      // handleInputChange('property_image_url', uploadedUrl)
+      // Upload to Supabase Storage
+      const uploadedUrl = await uploadPropertyImage(file)
+      handleInputChange('property_image_url', uploadedUrl)
+      console.log('Image uploaded successfully:', uploadedUrl)
       
     } catch (error) {
       console.error('Error uploading file:', error)
-      alert('Error uploading file. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Error uploading file: ${errorMessage}. Using default image instead.`)
+      // Fallback to default image on error
+      handleInputChange('property_image_url', '/default-photo.jpeg')
     } finally {
       setUploading(false)
     }
