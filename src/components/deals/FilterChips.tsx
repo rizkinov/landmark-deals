@@ -37,21 +37,21 @@ export function FilterChips({ filters, onFilterChange, onClearFilters }: FilterC
     })
   })
 
-  // Category chips
-  filters.categories.forEach((category) => {
+  // Asset Class chips
+  filters.assetClasses.forEach((assetClass) => {
     chips.push({
-      id: `category-${category}`,
-      label: `Category: ${category}`,
-      onRemove: () => onFilterChange('categories', filters.categories.filter(c => c !== category))
+      id: `asset-class-${assetClass}`,
+      label: `Asset Class: ${assetClass}`,
+      onRemove: () => onFilterChange('assetClasses', filters.assetClasses.filter(ac => ac !== assetClass))
     })
   })
 
-  // Subcategory chips
-  filters.subcategories.forEach((subcategory) => {
+  // Services chips
+  filters.services.forEach((service) => {
     chips.push({
-      id: `subcategory-${subcategory}`,
-      label: `Subcategory: ${subcategory}`,
-      onRemove: () => onFilterChange('subcategories', filters.subcategories.filter(s => s !== subcategory))
+      id: `service-${service}`,
+      label: `Service: ${service}`,
+      onRemove: () => onFilterChange('services', filters.services.filter(s => s !== service))
     })
   })
 

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Deal, FilterState, CreateDealData, UpdateDealData, DealsResponse } from './types'
+import { quarterToDate } from './utils'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
@@ -36,36 +37,42 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
     query = query.in('country', filters.countries)
   }
 
-  // Apply category filter
-  if (filters.categories.length > 0) {
-    query = query.in('category', filters.categories)
+  // Apply asset class filter
+  if (filters.assetClasses.length > 0) {
+    query = query.in('asset_class', filters.assetClasses)
   }
 
-  // Apply subcategory filter
-  if (filters.subcategories.length > 0) {
-    query = query.in('subcategory', filters.subcategories)
+  // Apply services filter
+  if (filters.services.length > 0) {
+    query = query.in('services', filters.services)
   }
 
-  // Apply price range filter
+  // Apply price range filter (always use USD as the filter currency)
   if (filters.priceRange.min !== null || filters.priceRange.max !== null) {
-    const priceField = filters.priceRange.currency === 'USD' ? 'deal_price_usd' : 'deal_price_sgd'
-    
     if (filters.priceRange.min !== null) {
-      query = query.gte(priceField, filters.priceRange.min)
+      query = query.gte('deal_price_usd', filters.priceRange.min)
     }
     
     if (filters.priceRange.max !== null) {
-      query = query.lte(priceField, filters.priceRange.max)
+      query = query.lte('deal_price_usd', filters.priceRange.max)
     }
   }
 
   // Apply date range filter
   if (filters.dateRange.startQuarter || filters.dateRange.endQuarter) {
     if (filters.dateRange.startQuarter) {
-      query = query.gte('deal_date', filters.dateRange.startQuarter)
+      // Convert quarter to date for comparison
+      const startDate = quarterToDate(filters.dateRange.startQuarter)
+      if (startDate) {
+        query = query.gte('deal_date_sortable', startDate)
+      }
     }
     if (filters.dateRange.endQuarter) {
-      query = query.lte('deal_date', filters.dateRange.endQuarter)
+      // Convert quarter to date for comparison
+      const endDate = quarterToDate(filters.dateRange.endQuarter)
+      if (endDate) {
+        query = query.lte('deal_date_sortable', endDate)
+      }
     }
   }
 
@@ -88,10 +95,10 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
       query = query.order('deal_price_usd', { ascending: true })
       break
     case 'date_desc':
-      query = query.order('deal_date', { ascending: false })
+      query = query.order('deal_date_sortable', { ascending: false })
       break
     case 'date_asc':
-      query = query.order('deal_date', { ascending: true })
+      query = query.order('deal_date_sortable', { ascending: true })
       break
     case 'name_asc':
       query = query.order('property_name', { ascending: true })
@@ -176,23 +183,25 @@ export async function fetchDealById(id: string): Promise<Deal | null> {
 export async function fetchUniqueValues(): Promise<{
   buyers: string[]
   sellers: string[]
-  subcategories: string[]
+  assetClasses: string[]
+  services: string[]
 }> {
   try {
     const { data: deals, error } = await supabase
       .from('deals')
-      .select('buyer, seller, subcategory')
+      .select('buyer, seller, asset_class, services')
 
     if (error) throw error
 
     const buyers = [...new Set(deals?.map((d: any) => d.buyer) || [])].sort()
     const sellers = [...new Set(deals?.map((d: any) => d.seller) || [])].sort()
-    const subcategories = [...new Set(deals?.map((d: any) => d.subcategory) || [])].sort()
+    const assetClasses = [...new Set(deals?.map((d: any) => d.asset_class) || [])].sort()
+    const services = [...new Set(deals?.map((d: any) => d.services) || [])].sort()
 
-    return { buyers, sellers, subcategories }
+    return { buyers, sellers, assetClasses, services }
   } catch (error) {
     console.error('Error fetching unique values:', error)
-    return { buyers: [], sellers: [], subcategories: [] }
+    return { buyers: [], sellers: [], assetClasses: [], services: [] }
   }
 }
 

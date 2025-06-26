@@ -6,8 +6,8 @@ import { useLocalStorage } from './use-local-storage'
 const defaultFilterState: FilterState = {
   search: '',
   countries: [],
-  categories: [],
-  subcategories: [],
+  assetClasses: [],
+  services: [],
   priceRange: {
     min: null,
     max: null,
@@ -25,6 +25,26 @@ const defaultFilterState: FilterState = {
 export function useFilterState() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  
+  // Clear old localStorage format if it exists
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const oldFilters = window.localStorage.getItem('cbre-deals-filters')
+      if (oldFilters) {
+        try {
+          const parsed = JSON.parse(oldFilters)
+          // If it has the old structure (categories/subcategories), clear it
+          if (parsed.categories !== undefined || parsed.subcategories !== undefined) {
+            window.localStorage.removeItem('cbre-deals-filters')
+          }
+        } catch (error) {
+          // If parsing fails, clear it anyway
+          window.localStorage.removeItem('cbre-deals-filters')
+        }
+      }
+    }
+  }, [])
+  
   const [savedFilters, setSavedFilters] = useLocalStorage<FilterState>(
     'cbre-deals-filters',
     defaultFilterState
@@ -41,20 +61,19 @@ export function useFilterState() {
     const countries = searchParams.get('countries')
     if (countries) urlFilters.countries = countries.split(',')
 
-    const categories = searchParams.get('categories')
-    if (categories) urlFilters.categories = categories.split(',')
+    const assetClasses = searchParams.get('assetClasses')
+    if (assetClasses) urlFilters.assetClasses = assetClasses.split(',')
 
-    const subcategories = searchParams.get('subcategories')
-    if (subcategories) urlFilters.subcategories = subcategories.split(',')
+    const services = searchParams.get('services')
+    if (services) urlFilters.services = services.split(',')
 
     const priceMin = searchParams.get('priceMin')
     const priceMax = searchParams.get('priceMax')
-    const priceCurrency = searchParams.get('priceCurrency') as 'USD' | 'SGD'
-    if (priceMin || priceMax || priceCurrency) {
+    if (priceMin || priceMax) {
       urlFilters.priceRange = {
         min: priceMin ? parseFloat(priceMin) : null,
         max: priceMax ? parseFloat(priceMax) : null,
-        currency: priceCurrency || 'USD'
+        currency: 'USD'
       }
     }
 
@@ -78,7 +97,17 @@ export function useFilterState() {
 
     // If URL has filters, use them; otherwise use saved filters
     const hasUrlFilters = Object.keys(urlFilters).length > 0
-    return hasUrlFilters ? { ...defaultFilterState, ...urlFilters } : savedFilters
+    
+    // Ensure savedFilters has the correct structure (migrate from old format if needed)
+    const migratedSavedFilters = {
+      ...defaultFilterState,
+      ...savedFilters,
+      // Ensure assetClasses and services exist (migrate from old categories/subcategories if needed)
+      assetClasses: savedFilters.assetClasses || [],
+      services: savedFilters.services || []
+    }
+    
+    return hasUrlFilters ? { ...defaultFilterState, ...urlFilters } : migratedSavedFilters
   })
 
   // Update URL when filters change
@@ -87,12 +116,11 @@ export function useFilterState() {
 
     if (newFilters.search) params.set('search', newFilters.search)
     if (newFilters.countries.length > 0) params.set('countries', newFilters.countries.join(','))
-    if (newFilters.categories.length > 0) params.set('categories', newFilters.categories.join(','))
-    if (newFilters.subcategories.length > 0) params.set('subcategories', newFilters.subcategories.join(','))
+    if (newFilters.assetClasses.length > 0) params.set('assetClasses', newFilters.assetClasses.join(','))
+    if (newFilters.services.length > 0) params.set('services', newFilters.services.join(','))
     
     if (newFilters.priceRange.min !== null) params.set('priceMin', newFilters.priceRange.min.toString())
     if (newFilters.priceRange.max !== null) params.set('priceMax', newFilters.priceRange.max.toString())
-    if (newFilters.priceRange.currency !== 'USD') params.set('priceCurrency', newFilters.priceRange.currency)
     
     if (newFilters.dateRange.startQuarter) params.set('dateStart', newFilters.dateRange.startQuarter)
     if (newFilters.dateRange.endQuarter) params.set('dateEnd', newFilters.dateRange.endQuarter)

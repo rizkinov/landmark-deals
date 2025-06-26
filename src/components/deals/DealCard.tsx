@@ -1,8 +1,8 @@
 'use client'
 
-import { Deal, COUNTRY_FLAGS } from '../../lib/types'
+import { Deal, ASSET_CLASS_COLORS, SERVICES_COLORS } from '../../lib/types'
+import { formatCurrency } from '../../lib/utils'
 import * as CBRE from '../cbre'
-import { formatPrice } from '../../lib/utils'
 
 interface DealCardProps {
   deal: Deal
@@ -51,7 +51,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
         {/* Country Badge */}
         <div className="absolute top-3 right-3">
           <CBRE.CBREBadge variant="secondary" className="bg-white/90 text-gray-800">
-            {COUNTRY_FLAGS[deal.country]} {deal.country}
+            {deal.country}
           </CBRE.CBREBadge>
         </div>
       </div>
@@ -66,21 +66,36 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
         {/* Deal Price */}
         <div className="mb-4">
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            USD {formatPrice(deal.deal_price_usd)}M
+            {formatCurrency(deal.deal_price_usd, 'USD')}
           </div>
-          <div className="text-lg text-gray-600">
-            SGD {formatPrice(deal.deal_price_sgd)}M
-          </div>
+          {deal.local_currency !== 'USD' && (
+            <div className="text-lg text-gray-600">
+              {formatCurrency(deal.local_currency_amount, deal.local_currency)}
+            </div>
+          )}
         </div>
 
-        {/* Category & Subcategory */}
+        {/* Asset Class & Services */}
         <div className="mb-4 space-y-2">
-          <CBRE.CBREBadge variant="outline" className="mr-2">
-            {deal.category}
-          </CBRE.CBREBadge>
-          <CBRE.CBREBadge variant="secondary">
-            {deal.subcategory}
-          </CBRE.CBREBadge>
+          {/* Asset Class - Colorful */}
+          <div className="flex">
+            <CBRE.CBREBadge 
+              variant="secondary" 
+              className={`${ASSET_CLASS_COLORS[deal.asset_class]} border-0 font-medium`}
+            >
+              {deal.asset_class}
+            </CBRE.CBREBadge>
+          </div>
+          
+          {/* Services - Monochrome */}
+          <div className="flex">
+            <CBRE.CBREBadge 
+              variant="outline" 
+              className={`${SERVICES_COLORS[deal.services]} text-xs font-normal`}
+            >
+              {deal.services}
+            </CBRE.CBREBadge>
+          </div>
         </div>
 
         {/* Deal Details Table */}

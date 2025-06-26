@@ -6,9 +6,11 @@ export interface Deal {
   property_image_url: string | null
   country: 'Japan' | 'Korea' | 'Taiwan' | 'Hong Kong' | 'China' | 'Singapore' | 'Maldives' | 'Australia'
   deal_price_usd: number // in millions
-  deal_price_sgd: number // in millions
-  category: 'Investment Property Sales' | 'Services'
-  subcategory: string
+  deal_price_sgd: number // in millions SGD
+  local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
+  local_currency_amount: number // in millions (or appropriate unit for currency)
+  asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
+  services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales'
   deal_date: string // Q2 2024 format
   buyer: string
   seller: string
@@ -19,8 +21,8 @@ export interface Deal {
 export interface FilterState {
   search: string
   countries: string[]
-  categories: string[]
-  subcategories: string[]
+  assetClasses: string[]
+  services: string[]
   priceRange: {
     min: number | null
     max: number | null
@@ -43,31 +45,28 @@ export interface FilterPreset {
 }
 
 export type Country = Deal['country']
-export type Category = Deal['category']
+export type AssetClass = Deal['asset_class']
+export type Services = Deal['services']
 
 export const COUNTRIES: Country[] = [
   'Japan', 'Korea', 'Taiwan', 'Hong Kong', 'China', 'Singapore', 'Maldives', 'Australia'
 ]
 
-export const CATEGORIES: Category[] = [
-  'Investment Property Sales', 'Services'
+export const ASSET_CLASSES: AssetClass[] = [
+  'Office',
+  'Hotels & Hospitality',
+  'Industrial & Logistics',
+  'Retail',
+  'Residential / Multifamily',
+  'Land',
+  'Data Centres'
 ]
 
-export const SUBCATEGORIES: Record<Category, string[]> = {
-  'Investment Property Sales': [
-    'Office',
-    'Hotels & Hospitality',
-    'Industrial & Logistics',
-    'Retail',
-    'Residential / Multifamily',
-    'Land',
-    'Data Centres'
-  ],
-  'Services': [
-    'Debt & Structured Finance',
-    'Capital Advisors'
-  ]
-}
+export const SERVICES: Services[] = [
+  'Debt & Structured Finance',
+  'Capital Advisors',
+  'Property Sales'
+]
 
 export const QUARTERS = [
   'Q1 2020', 'Q2 2020', 'Q3 2020', 'Q4 2020',
@@ -86,6 +85,22 @@ export const COUNTRY_FLAGS: Record<Country, string> = {
   'Singapore': '🇸🇬',
   'Maldives': '🇲🇻',
   'Australia': '🇦🇺'
+}
+
+export const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
+  'Office': 'bg-blue-100 text-blue-800',
+  'Hotels & Hospitality': 'bg-purple-100 text-purple-800',
+  'Industrial & Logistics': 'bg-orange-100 text-orange-800',
+  'Retail': 'bg-green-100 text-green-800',
+  'Residential / Multifamily': 'bg-yellow-100 text-yellow-800',
+  'Land': 'bg-amber-100 text-amber-800',
+  'Data Centres': 'bg-indigo-100 text-indigo-800'
+}
+
+export const SERVICES_COLORS: Record<Services, string> = {
+  'Debt & Structured Finance': 'bg-gray-50 text-gray-600 border-gray-200',
+  'Capital Advisors': 'bg-gray-50 text-gray-600 border-gray-200',
+  'Property Sales': 'bg-gray-50 text-gray-600 border-gray-200'
 }
 
 export const PRICE_RANGES = [
@@ -115,8 +130,10 @@ export interface CreateDealData {
   country: Country
   deal_price_usd: number
   deal_price_sgd: number
-  category: Category
-  subcategory: string
+  local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
+  local_currency_amount: number
+  asset_class: AssetClass
+  services: Services
   deal_date: string
   buyer: string
   seller: string

@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { CBREThemeProvider } from '../src/components/cbre/CBREThemeProvider'
+import { financierDisplay, calibre } from './fonts'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,14 +17,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${financierDisplay.variable} ${calibre.variable}`}>
         <CBREThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
-        >
-          {children}
+      >
+        {children}
         </CBREThemeProvider>
       </body>
     </html>

@@ -3,8 +3,9 @@
 import { Suspense } from 'react'
 import * as CBRE from '../../src/components/cbre'
 import { DealGrid } from '../../src/components/deals/DealGrid'
-import { FilterBar } from '../../src/components/deals/FilterBar'
+import { FilterSidebar } from '../../src/components/deals/FilterSidebar'
 import { FilterChips } from '../../src/components/deals/FilterChips'
+import { HeroBanner } from '../../src/components/deals/HeroBanner'
 import { useFilterState } from '../../src/hooks/use-filter-state'
 import { useFilteredDeals } from '../../src/hooks/use-filtered-deals'
 
@@ -26,66 +27,62 @@ function DealsPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-[#003F2D]">
-                CBRE Capital Market Landmark Deals
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Discover significant real estate transactions across Asia Pacific
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <CBRE.CBREBadge variant="secondary">
-                {loading ? 'Loading...' : `${filteredCount} of ${totalCount} deals`}
-              </CBRE.CBREBadge>
+      {/* Hero Banner */}
+      <HeroBanner />
+      
+      <div className="flex">
+        {/* Left Sidebar */}
+        <FilterSidebar 
+          filters={filters}
+          onFilterChange={updateFilter}
+          onClearFilters={clearFilters}
+          loading={loading}
+        />
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+        {/* Compact Stats and Filters Bar */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="px-6 py-3">
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Stats and Filter Chips */}
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <CBRE.CBREBadge variant="secondary" className="flex-shrink-0">
+                  {loading ? 'Loading...' : `${filteredCount} of ${totalCount} deals`}
+                </CBRE.CBREBadge>
+                {hasActiveFilters && (
+                  <div className="flex-1 min-w-0">
+                    <FilterChips 
+                      filters={filters}
+                      onFilterChange={updateFilter}
+                      onClearFilters={clearFilters}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Right: Refresh Button */}
               <CBRE.CBREButton 
                 variant="outline" 
                 onClick={refresh}
                 disabled={loading}
+                className="flex-shrink-0"
               >
                 Refresh
               </CBRE.CBREButton>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="container mx-auto px-4">
-          <FilterBar 
-            filters={filters}
-            onFilterChange={updateFilter}
-            onClearFilters={clearFilters}
+        {/* Deals Grid */}
+        <div className="flex-1 px-6 py-8 overflow-y-auto">
+          <DealGrid 
+            deals={deals}
             loading={loading}
+            searchTerm={filters.search}
           />
         </div>
-      </div>
-
-      {/* Filter Chips */}
-      {hasActiveFilters && (
-        <div className="bg-gray-50 border-b border-gray-200">
-          <div className="container mx-auto px-4 py-4">
-            <FilterChips 
-              filters={filters}
-              onFilterChange={updateFilter}
-              onClearFilters={clearFilters}
-            />
-          </div>
         </div>
-      )}
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <DealGrid 
-          deals={deals}
-          loading={loading}
-          searchTerm={filters.search}
-        />
       </div>
     </div>
   )
