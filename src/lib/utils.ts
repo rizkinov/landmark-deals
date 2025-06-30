@@ -24,7 +24,7 @@ export function formatCurrency(
     AUD: 'A$',
     JPY: '¥',
     HKD: 'HK$',
-    CNY: '¥',
+    CNY: 'CN¥', // Chinese Yuan - distinguished from Japanese Yen
     KRW: '₩',
     TWD: 'NT$',
     MVR: 'Rf'
