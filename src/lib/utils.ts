@@ -43,6 +43,14 @@ export function formatCurrency(
     } else {
       formattedAmount = amount.toFixed(0)
     }
+  } else if (currency === 'TWD') {
+    // Taiwan Dollar - always display in billions due to large amounts
+    if (unit === 'M') {
+      formattedAmount = (amount / 1000).toFixed(1)
+      displayUnit = 'B'
+    } else {
+      formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
+    }
   } else {
     // Other currencies use decimals
     formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
