@@ -72,7 +72,7 @@ export function FilterSidebar({ filters, onFilterChange, onClearFilters, loading
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Properties, buyers, sellers..."
+              placeholder="Properties, buyers, sellers, locations..."
               value={filters.search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFilterChange('search', e.target.value)}
               className="pl-10 text-sm"

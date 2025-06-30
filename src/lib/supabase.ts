@@ -29,7 +29,7 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
 
   // Apply search filter
   if (filters.search) {
-    query = query.or(`property_name.ilike.%${filters.search}%,buyer.ilike.%${filters.search}%,seller.ilike.%${filters.search}%`)
+    query = query.or(`property_name.ilike.%${filters.search}%,buyer.ilike.%${filters.search}%,seller.ilike.%${filters.search}%,location.ilike.%${filters.search}%,remarks.ilike.%${filters.search}%`)
   }
 
   // Apply country filter

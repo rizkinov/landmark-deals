@@ -68,7 +68,9 @@ export default function AdminDealsPage() {
         deal.property_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.buyer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.seller.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.country.toLowerCase().includes(searchTerm.toLowerCase())
+        deal.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deal.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (deal.remarks && deal.remarks.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       setFilteredDeals(filtered)
     } else {
@@ -131,7 +133,7 @@ export default function AdminDealsPage() {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search deals by property, buyer, seller, or country..."
+              placeholder="Search deals by property, buyer, seller, country, location, or remarks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
