@@ -66,11 +66,23 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
         {/* Deal Price */}
         <div className="mb-4">
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {formatCurrency(deal.deal_price_usd, 'USD')}
+            {(() => {
+              const currencyResult = formatCurrency(deal.deal_price_usd, 'USD', { includeBillionAnnotation: true })
+              return (
+                <span>
+                  {currencyResult.formatted}
+                  {currencyResult.billionAnnotation && (
+                    <span className="text-base font-normal text-gray-600 ml-1">
+                      ({currencyResult.billionAnnotation})
+                    </span>
+                  )}
+                </span>
+              )
+            })()}
           </div>
           {deal.local_currency !== 'USD' && (
             <div className="text-lg text-gray-600">
-              {formatCurrency(deal.local_currency_amount, deal.local_currency)}
+              {formatCurrency(deal.local_currency_amount, deal.local_currency).formatted}
             </div>
           )}
         </div>

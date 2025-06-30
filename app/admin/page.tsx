@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { fetchDeals } from '../../src/lib/supabase'
 import { Deal } from '../../src/lib/types'
-import { formatCurrency } from '../../src/lib/utils'
+import { formatCurrencyString } from '../../src/lib/utils'
 import * as CBRE from '../../src/components/cbre'
 import { 
   FileTextIcon, 
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600">Total Value</p>
               <p className="text-3xl font-bold text-gray-900">
-                {formatCurrency(stats.totalValue, 'USD', { unit: 'M' })}
+                {formatCurrencyString(stats.totalValue, 'USD', { unit: 'M' })}
               </p>
             </div>
             <DollarIcon className="w-8 h-8 text-gray-400" />
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600">Avg Deal Size</p>
               <p className="text-3xl font-bold text-gray-900">
-                {formatCurrency(stats.totalValue / stats.totalDeals || 0, 'USD', { unit: 'M' })}
+                {formatCurrencyString(stats.totalValue / stats.totalDeals || 0, 'USD', { unit: 'M' })}
               </p>
             </div>
             <BarChartIcon className="w-8 h-8 text-gray-400" />
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
                   </p>
                 </div>
                 <div className="text-sm font-semibold text-gray-900">
-                  {formatCurrency(deal.deal_price_usd, 'USD')}
+                                      {formatCurrencyString(deal.deal_price_usd, 'USD')}
                 </div>
               </div>
             ))}

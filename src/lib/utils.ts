@@ -12,9 +12,10 @@ export function formatCurrency(
   options: {
     showDecimals?: boolean
     unit?: 'M' | 'B' | '' // M for millions, B for billions
+    includeBillionAnnotation?: boolean // Show billion annotation for USD deals > 1B
   } = {}
-): string {
-  const { showDecimals = true, unit = 'M' } = options
+): { formatted: string; billionAnnotation?: string } {
+  const { showDecimals = true, unit = 'M', includeBillionAnnotation = false } = options
 
   // Currency symbol mapping
   const currencySymbols = {
@@ -32,6 +33,7 @@ export function formatCurrency(
   // Determine appropriate decimal places and unit
   let formattedAmount: string
   let displayUnit = unit
+  let billionAnnotation: string | undefined
 
   if (currency === 'JPY' || currency === 'KRW') {
     // Japanese Yen and Korean Won typically don't use decimals and are often in billions
@@ -46,7 +48,29 @@ export function formatCurrency(
     formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
   }
 
-  return `${currencySymbols[currency]}${formattedAmount}${displayUnit}`
+  // Check for billion annotation (only for USD and when amount is > 1000M)
+  if (includeBillionAnnotation && currency === 'USD' && amount >= 1000 && unit === 'M') {
+    const billionValue = (amount / 1000).toFixed(1)
+    billionAnnotation = `$${billionValue} bil`
+  }
+
+  const formatted = `${currencySymbols[currency]}${formattedAmount}${displayUnit}`
+  
+  return billionAnnotation 
+    ? { formatted, billionAnnotation }
+    : { formatted }
+}
+
+// Backward compatible helper that returns string only
+export function formatCurrencyString(
+  amount: number,
+  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR',
+  options: {
+    showDecimals?: boolean
+    unit?: 'M' | 'B' | ''
+  } = {}
+): string {
+  return formatCurrency(amount, currency, options).formatted
 }
 
 // Format price with proper decimal places and commas

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { fetchDeals, deleteDeal } from '../../../src/lib/supabase'
 import { Deal } from '../../../src/lib/types'
-import { formatCurrency } from '../../../src/lib/utils'
+import { formatCurrencyString } from '../../../src/lib/utils'
 import * as CBRE from '../../../src/components/cbre'
 import { 
   PlusIcon, 
@@ -198,11 +198,11 @@ export default function AdminDealsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(deal.deal_price_usd, 'USD')}
+                                              {formatCurrencyString(deal.deal_price_usd, 'USD')}
                     </div>
                     {deal.local_currency !== 'USD' && (
                       <div className="text-xs text-gray-500">
-                        {formatCurrency(deal.local_currency_amount, deal.local_currency)}
+                        {formatCurrencyString(deal.local_currency_amount, deal.local_currency)}
                       </div>
                     )}
                   </td>
