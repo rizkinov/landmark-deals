@@ -36,6 +36,8 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     deal_date: 'Q4 2024',
     buyer: '',
     seller: '',
+    location: '',
+    remarks: '',
   })
 
   // Populate form if editing
@@ -53,6 +55,8 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
         deal_date: deal.deal_date,
         buyer: deal.buyer,
         seller: deal.seller,
+        location: deal.location,
+        remarks: deal.remarks || '',
       })
     }
   }, [deal, isEditing])
@@ -463,7 +467,7 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
 
       <CBRE.CBRECard className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Transaction Parties
+          Transaction Parties & Details
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -493,6 +497,43 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
               placeholder="e.g., Government of Singapore"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+              placeholder="e.g., Marina Bay, Singapore"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              City, district, or specific area where the property is located
+            </p>
+          </div>
+
+          <div className="md:col-span-1">
+            {/* Empty space to maintain grid layout */}
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Remarks
+            </label>
+            <textarea
+              value={formData.remarks || ''}
+              onChange={(e) => handleInputChange('remarks', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent resize-none"
+              placeholder="Optional: Additional notes, strategic significance, or special circumstances..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Optional field for additional context or notes about this deal
+            </p>
           </div>
         </div>
       </CBRE.CBRECard>

@@ -13,6 +13,8 @@ export interface Deal {
   deal_date: string // Q2 2024 format
   buyer: string
   seller: string
+  location: string // Required: city/town (e.g., "Marina Bay, Singapore")
+  remarks: string | null // Optional: additional notes
   created_at: string
   updated_at: string
 }
@@ -136,6 +138,8 @@ export interface CreateDealData {
   deal_date: string
   buyer: string
   seller: string
+  location: string
+  remarks?: string
 }
 
 export interface UpdateDealData extends Partial<CreateDealData> {

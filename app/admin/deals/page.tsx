@@ -169,6 +169,9 @@ export default function AdminDealsPage() {
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Remarks
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -194,7 +197,8 @@ export default function AdminDealsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{deal.country}</div>
+                    <div className="text-sm text-gray-900">{deal.location}</div>
+                    <div className="text-xs text-gray-500">{deal.country}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
@@ -212,6 +216,15 @@ export default function AdminDealsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {deal.deal_date}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap max-w-48">
+                    {deal.remarks ? (
+                      <div className="text-sm text-gray-900 truncate" title={deal.remarks}>
+                        {deal.remarks}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">No remarks</div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex gap-2">

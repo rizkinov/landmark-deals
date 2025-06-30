@@ -121,7 +121,7 @@ export default function AdminDashboard() {
                     {deal.property_name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {deal.country} • {deal.deal_date}
+                    {deal.location} • {deal.country} • {deal.deal_date}
                   </p>
                 </div>
                 <div className="text-sm font-semibold text-gray-900">
