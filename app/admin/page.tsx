@@ -76,7 +76,7 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600">Total Value</p>
               <p className="text-3xl font-bold text-gray-900">
-                {formatCurrencyString(stats.totalValue, 'USD', { unit: 'M' })}
+                {formatCurrencyString(stats.totalValue, 'USD', { unit: 'B' })}
               </p>
             </div>
             <DollarIcon className="w-8 h-8 text-gray-400" />
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600">Avg Deal Size</p>
               <p className="text-3xl font-bold text-gray-900">
-                {formatCurrencyString(stats.totalValue / stats.totalDeals || 0, 'USD', { unit: 'M' })}
+                {formatCurrencyString(stats.totalValue / stats.totalDeals || 0, 'USD', { unit: 'B' })}
               </p>
             </div>
             <BarChartIcon className="w-8 h-8 text-gray-400" />
