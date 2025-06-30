@@ -382,7 +382,7 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
                 <SelectItem value="HKD">HKD (Millions)</SelectItem>
                 <SelectItem value="CNY">CNY (Millions)</SelectItem>
                 <SelectItem value="KRW">KRW (Billions)</SelectItem>
-                <SelectItem value="TWD">TWD (Millions)</SelectItem>
+                <SelectItem value="TWD">TWD (Billions)</SelectItem>
                 <SelectItem value="MVR">MVR (Millions)</SelectItem>
               </SelectContent>
             </CBRE.CBRESelect>
@@ -390,7 +390,7 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Local Currency Amount ({formData.local_currency === 'JPY' || formData.local_currency === 'KRW' ? 'Billions' : 'Millions'})
+              Local Currency Amount ({formData.local_currency === 'JPY' || formData.local_currency === 'KRW' || formData.local_currency === 'TWD' ? 'Billions' : 'Millions'})
             </label>
             <input
               type="number"
