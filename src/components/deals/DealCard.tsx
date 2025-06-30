@@ -27,7 +27,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
   }
 
   return (
-    <CBRE.CBRECard className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full">
+    <CBRE.CBRECard className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full !pt-0">
       {/* Property Image */}
       <div className="relative h-48 overflow-hidden">
         {deal.property_image_url ? (
