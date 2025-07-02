@@ -47,6 +47,51 @@ export async function signInAdmin(email: string, password: string) {
   return { user: data.user, admin: adminRecord }
 }
 
+// Sign up new admin user (for invited admins)
+export async function signUpAdmin(email: string, password: string) {
+  // First, check if there's an admin invitation for this email
+  const { data: invitation } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('email', email)
+    .is('auth_user_id', null)
+    .eq('is_active', false)
+    .single()
+  
+  if (!invitation) {
+    throw new Error('No admin invitation found for this email address.')
+  }
+  
+  // Create the auth user
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+  
+  if (error) throw error
+  
+  if (!data.user) {
+    throw new Error('Signup failed - no user created.')
+  }
+  
+  // Link the auth user to the admin invitation
+  await supabase
+    .from('admin_users')
+    .update({
+      auth_user_id: data.user.id,
+      is_active: true
+    })
+    .eq('id', invitation.id)
+  
+  // Now sign them in automatically
+  await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+  
+  return data
+}
+
 // Link auth user to existing admin invitation
 async function linkAuthUserToAdminInvitation(authUserId: string, email: string) {
   try {
