@@ -36,7 +36,7 @@ This guide will help you implement a secure admin authentication system with:
 2. Click **"Add user"**
 3. Fill in:
    - **Email**: `rizki.novianto@cbre.com`
-   - **Password**: `Cbre2025!`
+   - **Password**: `[PRIVATE - Contact admin for credentials]`
    - **Auto confirm user**: ✅
 4. **Copy the User ID** from the users list
 
@@ -588,7 +588,7 @@ export function AdminManagement() {
 1. Start your development server: `npm run dev`
 2. Navigate to `/admin`
 3. Login modal should appear
-4. Use credentials: `rizki.novianto@cbre.com` / `Cbre2025!`
+4. Use credentials: `rizki.novianto@cbre.com` / `[PRIVATE - Contact admin for credentials]`
 5. Should successfully access admin dashboard
 
 ### **Step 2: Test Admin Management**

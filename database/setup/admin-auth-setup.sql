@@ -242,7 +242,7 @@ NEXT STEPS AFTER RUNNING THIS SQL:
 1. Create super admin user account:
    - Go to Supabase Auth dashboard
    - Create user with email: rizki.novianto@cbre.com
-   - Set password: Cbre2025!
+   - Set password: [PRIVATE - Contact admin for credentials]
    - Copy the user ID from auth.users table
 
 2. Insert super admin record:
