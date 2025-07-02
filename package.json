@@ -1,25 +1,14 @@
 {
-  "name": "cbre-web-elements",
+  "name": "landmark-deals",
   "version": "0.1.0",
-  "description": "CBRE design system UI components",
-  "private": false,
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "description": "CBRE Capital Market Landmark Deals - Real estate transaction discovery platform for Asia Pacific",
+  "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
-  "sideEffects": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "clean": "rimraf dist",
-    "build:lib": "npm run clean && rollup -c",
-    "generateComp": "node scripts/generate-component.js",
-    "test": "jest"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -84,34 +73,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cbre/cbre-web-elements"
+    "url": "https://github.com/your-org/landmark-deals"
   },
-  "bugs": {
-    "url": "https://github.com/cbre/cbre-web-elements/issues"
-  },
-  "homepage": "https://github.com/cbre/cbre-web-elements",
   "devDependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/preset-env": "^7.26.9",
-    "@babel/preset-react": "^7.26.3",
-    "@babel/preset-typescript": "^7.27.0",
-    "@eslint/eslintrc": "^3",
-    "@rollup/plugin-babel": "^6.0.4",
-    "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-typescript": "^12.1.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
-    "glob": "^11.0.1",
-    "rimraf": "^6.0.1",
-    "rollup": "^4.39.0",
-    "rollup-plugin-dts": "^6.2.1",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-postcss": "^4.0.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

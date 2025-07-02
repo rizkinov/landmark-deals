@@ -1,0 +1,252 @@
+# 🧹 Landmark Deals Web App - Project Cleanup Plan
+
+**Project**: CBRE Capital Market Landmark Deals Web Application  
+**Purpose**: Real estate transaction discovery platform for Asia Pacific  
+**Status**: Fully functioning app requiring cleanup  
+
+---
+
+## 📋 AUDIT SUMMARY
+
+### ✅ Core Application
+- **Main App**: Next.js 15 + React 19 application
+- **Purpose**: Display significant real estate transactions across Asia Pacific
+- **Database**: Supabase integration with property deals data
+- **Component Library**: Uses CBRE Web Elements as dependency
+
+### ❌ Issues Identified
+
+#### 🔄 Duplicate Component Structures
+- **Root `/components/`** vs **`/src/components/`** - Two component directories exist
+- **Duplicate config files**: `tailwind.config.js` in root AND `/config/`
+- **Mixed import patterns**: Some files import from root components, others from src
+
+#### 📦 Legacy Build Artifacts
+- **`dist/` folder**: Contains compiled library files (not needed for this app)
+- **`cbre-web-elements-0.1.0.tgz`**: Packaged archive file
+- **Library build configs**: `rollup.config.js`, `tsconfig.lib.json`
+
+#### 🗄️ Database Migration Chaos
+**20 SQL files** in root directory:
+- Multiple migration versions for same features
+- Development/debugging files mixed with production
+- Duplicate migration approaches
+- No clear migration order/dependency
+
+#### 📝 Documentation Confusion
+- **README.md**: Describes this as a component library (incorrect)
+- **CONTRIBUTING.md**: Component library contribution guide (not applicable)
+- **CONDUCT.md**: Generic conduct file
+- Mix of app documentation vs library documentation
+
+---
+
+## 🎯 CLEANUP PHASES
+
+### **Phase 1: Remove Library Build Artifacts** ✅ SAFE
+**Status**: ✅ COMPLETED
+
+#### Files to Remove:
+- [x] `dist/` folder and contents
+- [x] `cbre-web-elements-0.1.0.tgz`
+- [x] `rollup.config.js` 
+- [x] `tsconfig.lib.json`
+- [x] Library-specific package.json scripts
+
+#### Package.json Updates:
+- [x] Remove library build scripts (`build:lib`, `clean`, `generateComp`, `test`)
+- [x] Update project description to reflect Landmark Deals app
+- [x] Remove library-specific fields (`main`, `module`, `types`, `files`, `sideEffects`)
+- [x] Remove library-specific dev dependencies (babel, rollup, etc.)
+- [x] Update repository URLs and remove bugs/homepage
+
+---
+
+### **Phase 2: Consolidate Component Structure** ⚠️ MODERATE RISK
+**Status**: 🟡 PLANNING
+
+#### Strategy: Keep `/src/components/` as primary structure
+- [ ] **Audit**: Compare `/components/` vs `/src/components/`
+- [ ] **Map dependencies**: Find which files import from where
+- [ ] **Migrate**: Move any unique components to `/src/components/`
+- [ ] **Update imports**: Fix all import paths
+- [ ] **Remove**: Delete `/components/` folder
+- [ ] **Test**: Verify app still works
+
+#### Import Pattern Standardization:
+- [ ] Standardize to `@/components/` imports (using Next.js alias)
+- [ ] Update all component references
+- [ ] Remove relative imports where possible
+
+---
+
+### **Phase 3: Database Migration Cleanup** ⚠️ HIGH RISK
+**Status**: 🟡 PLANNING
+
+#### Current SQL Files (20 total):
+```
+Migration Files:
+- migration.sql
+- migration-step-by-step.sql
+- clean-migration.sql
+- currency-migration.sql
+- currency-migration-step-by-step.sql
+- currency-migration-rollback.sql
+- asset-class-services-migration.sql
+- safe-asset-class-services-migration.sql
+- fixed-services-migration.sql
+- simple-services-migration.sql
+
+Setup Files:
+- supabase-schema.sql
+- environment-setup.sql
+- minimal-setup.sql
+- setup-image-storage.sql
+- safe-storage-setup.sql
+
+Utility Files:
+- individual-commands.sql
+- quick-reference.sql
+- diagnose-database-structure.sql
+- fix-date-sorting.sql
+- add-location-remarks-columns.sql
+```
+
+#### Cleanup Strategy:
+- [ ] **Document current database state**
+- [ ] **Identify final/production migration**
+- [ ] **Archive development/debug files** to `/archive/sql/`
+- [ ] **Keep only essential files**:
+  - Final schema file
+  - Production-ready setup file
+  - Current rollback file (if needed)
+- [ ] **Create**: `database-setup-instructions.md`
+
+---
+
+### **Phase 4: Configuration Cleanup** ✅ SAFE
+**Status**: 🟡 PLANNING
+
+#### Duplicate Configs:
+- [ ] **Tailwind**: Keep root `tailwind.config.js`, remove `/config/tailwind.config.js`
+- [ ] **Theme**: Consolidate theme variables
+- [ ] **PostCSS**: Verify `postcss.config.cjs` is correct format
+- [ ] **ESLint**: Choose between `.eslintrc.json` and `eslint.config.mjs`
+
+#### Next.js Config:
+- [ ] Review `next.config.js` for app-specific needs
+- [ ] Remove library-specific configurations
+- [ ] Ensure image domains are correct for Supabase
+
+---
+
+### **Phase 5: Documentation Rewrite** ✅ SAFE
+**Status**: 🟡 PLANNING
+
+#### Current Issues:
+- README describes component library, not the deals app
+- Contributing guide is for library development
+- Missing actual app documentation
+
+#### New Documentation Needed:
+- [ ] **README.md**: Rewrite for Landmark Deals app
+  - Purpose: Real estate deals discovery
+  - Tech stack: Next.js, Supabase, CBRE Web Elements
+  - Setup instructions
+  - Development guide
+- [ ] **SETUP.md**: Database and environment setup
+- [ ] **CONTRIBUTING.md**: App development guidelines
+- [ ] Remove generic `CONDUCT.md` or make app-specific
+
+---
+
+### **Phase 6: Scripts and Utilities Cleanup** ✅ SAFE
+**Status**: 🟡 PLANNING
+
+#### `/scripts/` folder review:
+- [ ] `generate-component.js` - Remove (for library development)
+- [ ] `rename-components.js` - Remove (migration script)
+- [ ] `fix-duplicate-imports.js` - Remove after running if needed
+- [ ] `fix-example-pages.js` - Keep if maintaining demo pages
+- [ ] `audit-example-pages.js` - Keep if maintaining demo pages
+
+---
+
+### **Phase 7: Demo Pages Review** ⚠️ MODERATE RISK
+**Status**: 🟡 PLANNING
+
+#### Current Demo Structure:
+```
+/app/elements-example/ - Component showcase pages
+/app/design-system/ - Design system demo
+/app/blocks-example/ - Block components demo
+```
+
+#### Decision Points:
+- [ ] **Keep**: If showcasing components for team reference
+- [ ] **Remove**: If not needed for production app
+- [ ] **Move**: To separate demo route if keeping
+
+---
+
+## 🚀 EXECUTION ORDER
+
+### **IMMEDIATE (Safe cleanup)**
+1. **Phase 1**: Remove build artifacts
+2. **Phase 4**: Fix configuration duplicates  
+3. **Phase 6**: Clean up scripts
+4. **Phase 5**: Update documentation
+
+### **CAREFUL (Requires testing)**
+5. **Phase 2**: Consolidate components (with thorough testing)
+6. **Phase 7**: Review demo pages
+
+### **FINAL (Database changes)**
+7. **Phase 3**: Database migration cleanup (after backup)
+
+---
+
+## 🛡️ SAFETY MEASURES
+
+### Before Starting:
+- [ ] **Git backup**: Create cleanup branch
+- [ ] **Database backup**: Export current Supabase data
+- [ ] **Document**: Current working state
+- [ ] **Test**: Run app locally to confirm it works
+
+### During Each Phase:
+- [ ] **Test frequently**: After each major change
+- [ ] **Commit often**: Small, reversible changes
+- [ ] **Validate**: App still functions correctly
+
+### Emergency Rollback:
+- [ ] Keep git history clean for easy reversion
+- [ ] Document any irreversible changes
+- [ ] Have Supabase backup ready for database changes
+
+---
+
+## 📊 EXPECTED RESULTS
+
+### File Count Reduction:
+- **Before**: ~150+ files (including migrations, duplicates, build artifacts)
+- **After**: ~100 essential files
+- **Cleanup**: ~50 files removed/consolidated
+
+### Structure Improvement:
+- ✅ Single source of truth for components
+- ✅ Clear configuration hierarchy  
+- ✅ Organized database setup
+- ✅ Accurate documentation
+- ✅ Production-ready codebase
+
+### Maintenance Benefits:
+- 📦 Easier dependency management
+- 🔍 Clearer project purpose
+- 🚀 Faster onboarding for new developers
+- 🛠️ Simplified deployment process
+
+---
+
+**Last Updated**: Initial Plan  
+**Next Action**: Begin Phase 1 - Remove Build Artifacts 
