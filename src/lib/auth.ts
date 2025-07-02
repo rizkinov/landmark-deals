@@ -19,15 +19,14 @@ export async function signInAdmin(email: string, password: string) {
   
   if (error) throw error
   
-  // Check if user is admin
+  // Check if user is admin using security definer function
   const { data: adminData, error: adminError } = await supabase
-    .from('admin_users')
-    .select('*')
-    .eq('auth_user_id', data.user.id)
-    .eq('is_active', true)
-    .single()
+    .rpc('get_user_admin_info', { user_id: data.user.id })
   
-  if (adminError || !adminData) {
+  // The RPC returns an array, so get the first result
+  const adminRecord = adminData && adminData.length > 0 ? adminData[0] : null
+  
+  if (adminError || !adminRecord) {
     await supabase.auth.signOut()
     throw new Error('Access denied. Admin privileges required.')
   }
@@ -35,7 +34,7 @@ export async function signInAdmin(email: string, password: string) {
   // Update last login
   await supabase.rpc('update_admin_last_login')
   
-  return { user: data.user, admin: adminData }
+  return { user: data.user, admin: adminRecord }
 }
 
 // Sign out
