@@ -1,4 +1,4 @@
-# 📋 Step-by-Step Setup Guide
+# 📋 Setup Guide - Image Storage & Deployment
 
 ## ⚠️ **IMPORTANT: Run in This Exact Order**
 

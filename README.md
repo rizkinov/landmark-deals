@@ -93,7 +93,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 ### **Database Setup**
 1. Create a new Supabase project
-2. Run the database setup (see `SETUP-ORDER.md` for detailed instructions)
+2. Run the database setup (see `setup-guide.md` for detailed instructions)
 3. Import sample deal data
 4. Configure storage policies for property images
 

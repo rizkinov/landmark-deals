@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 **Environment:**
  - OS: [e.g. Windows, macOS, Linux]
  - Browser: [e.g. Chrome, Safari, Firefox]
- - CBRE Web Elements Version: [e.g. 0.1.0]
+ - Node.js Version: [e.g. 18.17.0]
  - React Version: [e.g. 19.0.0]
  - Next.js Version: [e.g. 15.2.4]
 
