@@ -9,6 +9,40 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database helper functions
 export async function fetchDeals(): Promise<Deal[]> {
+  try {
+    // Try to use the simplified audit function
+    const { data: auditData, error: auditError } = await supabase
+      .rpc('get_deals_with_audit_info')
+
+    if (!auditError && auditData) {
+      // Now get admin info for deals that have been edited
+      const dealsWithAdmin = await Promise.all(
+        auditData.map(async (deal: any) => {
+          if (deal.last_edited_by) {
+            // Get admin info for this deal
+            const { data: adminInfo } = await supabase
+              .from('admin_users')
+              .select('email, role')
+              .eq('id', deal.last_edited_by)
+              .single()
+
+            return {
+              ...deal,
+              last_edited_by_email: adminInfo?.email || null,
+              last_edited_by_role: adminInfo?.role || null
+            }
+          }
+          return deal
+        })
+      )
+      
+      return dealsWithAdmin
+    }
+  } catch (error) {
+    console.warn('Audit function failed, falling back to regular query:', error)
+  }
+
+  // Fallback to regular query
   const { data, error } = await supabase
     .from('deals')
     .select('*')

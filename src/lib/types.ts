@@ -3,20 +3,27 @@
 export interface Deal {
   id: string
   property_name: string
-  property_image_url: string | null
+  property_image_url?: string | null
+  property_images?: string[]
   country: 'Japan' | 'Korea' | 'Taiwan' | 'Hong Kong' | 'China' | 'Singapore' | 'Maldives' | 'Australia'
   deal_price_usd: number // in millions
-  local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
-  local_currency_amount: number // in millions (or appropriate unit for currency)
+  local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
+  local_currency_amount?: number // in millions (or appropriate unit for currency)
   asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
   services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales'
   deal_date: string // Q2 2024 format
+  deal_date_sortable?: string
   buyer: string
   seller: string
   location: string // Required: city/town (e.g., "Marina Bay, Singapore")
-  remarks: string | null // Optional: additional notes
+  remarks?: string | null // Optional: additional notes
+  location_remarks?: string | null // Optional: location-specific notes
   created_at: string
-  updated_at: string
+  updated_at?: string
+  last_edited_at?: string
+  last_edited_by?: string
+  last_edited_by_email?: string
+  last_edited_by_role?: string
 }
 
 export interface FilterState {

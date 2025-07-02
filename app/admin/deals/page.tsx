@@ -174,6 +174,9 @@ export default function AdminDealsPage() {
                   Remarks
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Edited
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -184,7 +187,7 @@ export default function AdminDealsPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <DealThumbnail 
-                        imageUrl={deal.property_image_url} 
+                        imageUrl={deal.property_image_url || null} 
                         propertyName={deal.property_name}
                       />
                       
@@ -206,7 +209,7 @@ export default function AdminDealsPage() {
                     <div className="text-sm font-medium text-gray-900">
                                               {formatCurrencyString(deal.deal_price_usd, 'USD')}
                     </div>
-                    {deal.local_currency !== 'USD' && (
+                    {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
                       <div className="text-xs text-gray-500">
                         {formatCurrencyString(deal.local_currency_amount, deal.local_currency)}
                       </div>
@@ -226,6 +229,28 @@ export default function AdminDealsPage() {
                       </div>
                     ) : (
                       <div className="text-xs text-gray-400 italic">No remarks</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {deal.last_edited_at ? (
+                      <div>
+                        <div className="text-sm text-gray-900">
+                          {new Date(deal.last_edited_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {deal.last_edited_by_email && (
+                            <span title={`${deal.last_edited_by_role} - ${deal.last_edited_by_email}`}>
+                              by {deal.last_edited_by_email.split('@')[0]}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">No edits yet</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -37,6 +37,8 @@ All database migration files for features and schema changes:
 #### Feature Additions
 - **`add-location-remarks-columns.sql`** - Location remarks feature (47 lines)
 - **`fix-date-sorting.sql`** - Date sorting fix (55 lines)
+- **`add-deal-audit-tracking.sql`** - ⭐ Deal audit tracking system (100+ lines)
+- **`test-audit-tracking.sql`** - Audit tracking verification script
 
 ### `/utilities/` - Database Utilities
 Helper scripts and reference files:
@@ -66,6 +68,21 @@ Use utilities to check database state:
 database/utilities/diagnose-database-structure.sql
 ```
 
+## 🔍 Key Features
+
+### **Admin Authentication System** 
+Files: `admin-auth-setup.sql`, `create-super-admin.sql`
+- Complete admin user management with RLS
+- Role-based permissions (super_admin, admin)
+- Audit logging for admin actions
+
+### **Deal Audit Tracking** ⭐ NEW
+Files: `add-deal-audit-tracking.sql`, `test-audit-tracking.sql`
+- Tracks who last edited each deal and when
+- Automatic trigger-based updates
+- Admin-aware audit trail
+- Enhanced admin interface with edit history
+
 ## 📝 Notes
 
 - All file paths in documentation now reference this `/database/` folder structure
@@ -75,5 +92,5 @@ database/utilities/diagnose-database-structure.sql
 
 ---
 
-**Total Files**: 22 SQL files organized by purpose  
-**Last Updated**: Database organization cleanup 
+**Total Files**: 24 SQL files organized by purpose  
+**Last Updated**: Added deal audit tracking system 
