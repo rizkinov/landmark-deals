@@ -213,9 +213,11 @@ export default function AdminSettingsPage() {
               <p className="text-sm text-gray-600 mb-3">
                 Manage admin access and permissions
               </p>
-              <CBRE.CBREButton variant="outline" size="sm" disabled className="gap-2">
-                <PersonIcon className="w-4 h-4" />
-                Manage Users (Coming Soon)
+              <CBRE.CBREButton variant="outline" size="sm" asChild className="gap-2">
+                <a href="/admin/settings/users">
+                  <PersonIcon className="w-4 h-4" />
+                  Manage Users
+                </a>
               </CBRE.CBREButton>
             </div>
           </div>

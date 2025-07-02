@@ -12,7 +12,7 @@
 
 INSERT INTO admin_users (auth_user_id, email, role)
 VALUES (
-  'YOUR_AUTH_USER_ID_HERE', 
+  '483fe23c-d4dd-40e2-8ef6-43d4d81d63b9', 
   'rizki.novianto@cbre.com', 
   'super_admin'
 );

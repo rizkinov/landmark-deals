@@ -1,13 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import * as CBRE from '../../src/components/cbre'
+import { AdminGuard } from '../../src/components/admin/AdminGuard'
+import { getCurrentAdmin, signOutAdmin } from '../../src/lib/auth'
+import type { AdminUser } from '../../src/lib/auth'
 import { 
   DashboardIcon, 
   FileTextIcon, 
   PlusIcon, 
-  GearIcon 
+  GearIcon,
+  ExitIcon
 } from '@radix-ui/react-icons'
 
 const adminNavItems = [
@@ -17,12 +22,43 @@ const adminNavItems = [
   { href: '/admin/settings', label: 'Settings', icon: GearIcon },
 ]
 
-export default function AdminLayout({
+function AdminLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [admin, setAdmin] = useState<AdminUser | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    loadAdminData()
+  }, [])
+
+  const loadAdminData = async () => {
+    try {
+      const currentAdmin = await getCurrentAdmin()
+      setAdmin(currentAdmin)
+    } catch (error) {
+      console.error('Failed to load admin data:', error)
+    }
+  }
+
+  const handleLogout = async () => {
+    if (loggingOut) return
+    
+    setLoggingOut(true)
+    try {
+      await signOutAdmin()
+      router.push('/')
+    } catch (error) {
+      console.error('Logout failed:', error)
+      alert('Logout failed. Please try again.')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,7 +67,7 @@ export default function AdminLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <Link href="/" className="text-xl font-bold">
+              <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
                 ← Back to App
               </Link>
               <div className="h-6 w-px bg-white/30"></div>
@@ -40,12 +76,20 @@ export default function AdminLayout({
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm opacity-75">Admin User</span>
+              <div className="text-right">
+                <div className="text-sm font-medium">{admin?.email || 'Loading...'}</div>
+                <div className="text-xs opacity-75">
+                  {admin?.role ? admin.role.replace('_', ' ') : ''}
+                </div>
+              </div>
               <CBRE.CBREButton 
                 size="sm" 
-                className="bg-[#002A1F] text-white border border-white/30 hover:bg-white hover:text-[#003F2D] transition-colors"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="bg-[#002A1F] text-white border border-white/30 hover:bg-white hover:text-[#003F2D] transition-colors gap-2"
               >
-                Logout
+                <ExitIcon className="w-4 h-4" />
+                {loggingOut ? 'Logging out...' : 'Logout'}
               </CBRE.CBREButton>
             </div>
           </div>
@@ -101,4 +145,18 @@ export default function AdminLayout({
       </div>
     </div>
   )
-} 
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AdminGuard>
+      <AdminLayoutContent>
+        {children}
+      </AdminLayoutContent>
+    </AdminGuard>
+  )
+}
