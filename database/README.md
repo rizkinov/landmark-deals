@@ -12,6 +12,8 @@ Initial database setup, schema creation, and configuration files:
 - **`minimal-setup.sql`** - Quick setup for development (188 lines)
 - **`setup-image-storage.sql`** - Image storage configuration (245 lines)
 - **`safe-storage-setup.sql`** - Safe storage setup variant (177 lines)
+- **`admin-auth-setup.sql`** - ⭐ Admin authentication system setup (200+ lines)
+- **`create-super-admin.sql`** - ⭐ Super admin user creation script
 
 ### `/migrations/` - Database Migrations
 All database migration files for features and schema changes:
@@ -73,5 +75,5 @@ database/utilities/diagnose-database-structure.sql
 
 ---
 
-**Total Files**: 20 SQL files organized by purpose  
+**Total Files**: 22 SQL files organized by purpose  
 **Last Updated**: Database organization cleanup 
