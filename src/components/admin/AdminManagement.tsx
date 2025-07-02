@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getAdminUsers, createAdminUser, deactivateAdminUser, getAdminRole, logAdminAction } from '../../lib/auth'
+import { supabase } from '../../lib/supabase'
 import * as CBRE from '../cbre'
 import { PlusIcon, PersonIcon } from '@radix-ui/react-icons'
 import type { AdminUser } from '../../lib/auth'
@@ -12,6 +13,7 @@ export function AdminManagement() {
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [newAdminPassword, setNewAdminPassword] = useState('')
   const [newAdminRole, setNewAdminRole] = useState<'admin' | 'super_admin'>('admin')
   const [adding, setAdding] = useState(false)
 
@@ -39,14 +41,29 @@ export function AdminManagement() {
     setAdding(true)
 
     try {
-      await createAdminUser(newAdminEmail, newAdminRole)
+      const result = await createAdminUser(newAdminEmail, newAdminRole, newAdminPassword)
       await logAdminAction('create_admin', newAdminEmail, { role: newAdminRole })
       
       setNewAdminEmail('')
+      setNewAdminPassword('')
       setNewAdminRole('admin')
       setShowAddForm(false)
       await loadData()
-      alert('Admin user created successfully!')
+      
+      // Show detailed success message
+      alert(`✅ Admin invitation created successfully!
+      
+📧 Email: ${newAdminEmail}
+🔑 Password: ${newAdminPassword}
+👤 Role: ${newAdminRole}
+
+📋 Next steps:
+1. Send these credentials to the new admin
+2. They should go to the admin login page
+3. Sign up with these exact credentials
+4. Their admin account will be automatically activated
+
+⚠️ Important: Save these credentials now - the password won't be shown again!`)
     } catch (error) {
       alert(`Failed to create admin: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
@@ -64,6 +81,26 @@ export function AdminManagement() {
       alert('Admin user deactivated successfully!')
     } catch (error) {
       alert(`Failed to deactivate admin: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handleDeleteInvitation = async (adminId: string, email: string) => {
+    if (!confirm(`Are you sure you want to delete the invitation for ${email}?`)) return
+
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .delete()
+        .eq('id', adminId)
+        .is('auth_user_id', null) // Only delete if no auth user linked
+      
+      if (error) throw error
+      
+      await logAdminAction('delete_invitation', email)
+      await loadData()
+      alert('Admin invitation deleted successfully!')
+    } catch (error) {
+      alert(`Failed to delete invitation: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -143,6 +180,22 @@ export function AdminManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                  placeholder="Minimum 6 characters"
+                  required
+                  minLength={6}
+                  disabled={adding}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Role
                 </label>
                 <select
@@ -158,7 +211,13 @@ export function AdminManagement() {
             </div>
 
             <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
-              <p><strong>Note:</strong> The user will need to sign up with this email address to activate their admin account.</p>
+              <p><strong>How it works:</strong></p>
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>An admin invitation will be created with the email and role</li>
+                <li>Send the new admin their email and password</li>
+                <li>They sign up at the admin login page with these credentials</li>
+                <li>Their account will be automatically activated when they sign up</li>
+              </ol>
             </div>
 
             <div className="flex gap-3">
@@ -171,6 +230,7 @@ export function AdminManagement() {
                 onClick={() => {
                   setShowAddForm(false)
                   setNewAdminEmail('')
+                  setNewAdminPassword('')
                   setNewAdminRole('admin')
                 }}
                 disabled={adding}
@@ -186,6 +246,14 @@ export function AdminManagement() {
       <CBRE.CBRECard>
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Admin Users</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 mr-2">Active</span>
+            User is logged in and active •
+            <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 mx-2">Invitation Sent</span>
+            Waiting for user to sign up •
+            <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 ml-2">Inactive</span>
+            User exists but deactivated
+          </p>
         </div>
         
         <div className="overflow-x-auto">
@@ -221,9 +289,16 @@ export function AdminManagement() {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       admin.is_active 
                         ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
+                        : admin.auth_user_id 
+                          ? 'bg-gray-100 text-gray-800'
+                          : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {admin.is_active ? 'Active' : 'Inactive'}
+                      {admin.is_active 
+                        ? 'Active' 
+                        : admin.auth_user_id 
+                          ? 'Inactive'
+                          : 'Invitation Sent'
+                      }
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
@@ -233,19 +308,31 @@ export function AdminManagement() {
                     }
                   </td>
                   <td className="px-6 py-4">
-                    {admin.is_active && admin.role !== 'super_admin' && (
-                      <CBRE.CBREButton
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeactivate(admin.id, admin.email)}
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                      >
-                        Deactivate
-                      </CBRE.CBREButton>
-                    )}
-                    {admin.role === 'super_admin' && (
-                      <span className="text-xs text-gray-500">Protected</span>
-                    )}
+                    <div className="flex gap-2">
+                      {admin.is_active && admin.role !== 'super_admin' && (
+                        <CBRE.CBREButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeactivate(admin.id, admin.email)}
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                        >
+                          Deactivate
+                        </CBRE.CBREButton>
+                      )}
+                      {!admin.auth_user_id && (
+                        <CBRE.CBREButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteInvitation(admin.id, admin.email)}
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                        >
+                          Delete Invitation
+                        </CBRE.CBREButton>
+                      )}
+                      {admin.role === 'super_admin' && (
+                        <span className="text-xs text-gray-500">Protected</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

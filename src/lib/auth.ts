@@ -24,7 +24,17 @@ export async function signInAdmin(email: string, password: string) {
     .rpc('get_user_admin_info', { user_id: data.user.id })
   
   // The RPC returns an array, so get the first result
-  const adminRecord = adminData && adminData.length > 0 ? adminData[0] : null
+  let adminRecord = adminData && adminData.length > 0 ? adminData[0] : null
+  
+  // If no admin record found, check if there's an invitation for this email
+  if (!adminRecord) {
+    await linkAuthUserToAdminInvitation(data.user.id, email)
+    
+    // Try again after linking
+    const { data: retryAdminData } = await supabase
+      .rpc('get_user_admin_info', { user_id: data.user.id })
+    adminRecord = retryAdminData && retryAdminData.length > 0 ? retryAdminData[0] : null
+  }
   
   if (adminError || !adminRecord) {
     await supabase.auth.signOut()
@@ -35,6 +45,34 @@ export async function signInAdmin(email: string, password: string) {
   await supabase.rpc('update_admin_last_login')
   
   return { user: data.user, admin: adminRecord }
+}
+
+// Link auth user to existing admin invitation
+async function linkAuthUserToAdminInvitation(authUserId: string, email: string) {
+  try {
+    // Look for admin invitation with this email
+    const { data: invitation } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('email', email)
+      .is('auth_user_id', null)
+      .eq('is_active', false)
+      .single()
+    
+    if (invitation) {
+      // Link the auth user to the admin record
+      await supabase
+        .from('admin_users')
+        .update({
+          auth_user_id: authUserId,
+          is_active: true
+        })
+        .eq('id', invitation.id)
+    }
+  } catch (error) {
+    // Ignore errors - this is just a linking attempt
+    console.log('No admin invitation found for', email)
+  }
 }
 
 // Sign out
@@ -71,15 +109,34 @@ export async function getAdminRole(): Promise<string> {
   return error ? 'none' : data
 }
 
-// Create new admin user (super admin only)
-export async function createAdminUser(email: string, role: 'admin' | 'super_admin' = 'admin') {
-  const { data, error } = await supabase.rpc('create_admin_user', {
-    admin_email: email,
-    admin_role: role
-  })
+// Create new admin user invitation (super admin only)
+export async function createAdminUser(email: string, role: 'admin' | 'super_admin' = 'admin', password?: string) {
+  // Create an admin invitation - the user will need to sign up separately
+  const { data, error } = await supabase
+    .from('admin_users')
+    .insert([{
+      auth_user_id: null, // Will be linked when they sign up
+      email: email,
+      role: role,
+      is_active: false, // Will be activated when they sign up
+    }])
+    .select()
+    .single()
   
   if (error) throw error
-  return data
+  
+  return {
+    ...data,
+    message: `Admin invitation created for ${email}. Send them these credentials to sign up:`,
+    credentials: password ? {
+      email: email,
+      password: password,
+      instructions: "Sign up at the admin login page with these credentials"
+    } : {
+      email: email,
+      instructions: "Have them sign up at the admin login page with this email"
+    }
+  }
 }
 
 // Get all admin users
