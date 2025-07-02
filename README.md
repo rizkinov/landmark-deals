@@ -1,287 +1,241 @@
-# CBRE Web Elements
+# 🏢 CBRE Capital Market Landmark Deals
 
-A modern React component library styled according to CBRE's design system. Built on top of shadcn/ui and Tailwind CSS, this library provides a consistent, accessible, and customizable UI toolkit for CBRE web applications.
+A modern web application for discovering and showcasing significant real estate transactions across Asia Pacific. Built with Next.js 15 and React 19, using CBRE Web Elements design system.
 
-**Built with Next.js 15 and React 19.**
+**Live Application**: Real estate professionals and investors discover landmark property deals and market insights.
 
-## Features
+## 🎯 Purpose
 
-- **CBRE Design System**: Components adhering to CBRE's brand guidelines
-- **Consistent Interface**: Standardized components with consistent styling and behavior
-- **TypeScript Support**: Fully typed components for improved developer experience
-- **Modular Architecture**: Import only the components you need
-- **Accessibility**: Built with accessibility in mind
-- **Framework Agnostic**: Works with any React-based framework (Next.js, Remix, Create React App)
+**CBRE Capital Market Landmark Deals** is a sophisticated web platform that:
 
-## Table of Contents
+- **Showcases significant real estate transactions** across Asia Pacific markets
+- **Provides market insights** and deal analysis for real estate professionals  
+- **Connects investors** with landmark property opportunities
+- **Delivers market intelligence** through curated deal data
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Components](#components)
-- [Project Structure](#project-structure)
-- [Theming](#theming)
-- [Contributing](#contributing)
-- [Development](#development)
+## ✨ Features
 
-## Installation
+### 🔍 Deal Discovery
+- **Advanced filtering** by location, asset class, transaction size, and date
+- **Interactive deal cards** with property details and transaction information
+- **Search functionality** to find specific deals or properties
+- **Geographic filtering** across Asia Pacific markets
 
-### Using npm
+### 📊 Market Intelligence  
+- **Deal analytics** and market trends
+- **Property valuation insights** and pricing data
+- **Market performance metrics** by region and asset class
+- **Historical transaction data** and comparables
 
+### 👥 Professional Tools
+- **Curated deal lists** for different investor profiles
+- **Property image galleries** with high-quality visuals
+- **Deal comparison tools** for investment analysis
+- **Export capabilities** for further analysis
+
+### 🎨 Modern Interface
+- **CBRE design system** with consistent branding
+- **Responsive design** optimized for desktop and mobile
+- **Intuitive navigation** with advanced filtering capabilities
+- **High-performance** with server-side rendering
+
+## 🚀 Tech Stack
+
+### **Frontend**
+- **Next.js 15** - React framework with App Router
+- **React 19** - Latest React with server components
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+
+### **UI Components**
+- **CBRE Web Elements** - Official CBRE design system components
+- **shadcn/ui** - Modern React component primitives
+- **Radix UI** - Accessible component foundation
+
+### **Backend & Database**
+- **Supabase** - PostgreSQL database with real-time features
+- **Server Components** - Optimized data fetching
+- **Image Storage** - Supabase Storage for property images
+
+### **Development**
+- **ESLint** - Code linting with Next.js config
+- **Prettier** - Code formatting
+- **Git** - Version control with feature branches
+
+## 📦 Installation
+
+### **Prerequisites**
+- Node.js 18+ 
+- npm/yarn/pnpm
+- Supabase account (for database)
+
+### **Clone & Install**
 ```bash
-npm install cbre-web-elements
+# Clone the repository
+git clone <repository-url>
+cd landmark-deals
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
 ```
 
-### Using yarn
+### **Environment Setup**
+Create `.env.local` with:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
 
+### **Database Setup**
+1. Create a new Supabase project
+2. Run the database setup (see `SETUP-ORDER.md` for detailed instructions)
+3. Import sample deal data
+4. Configure storage policies for property images
+
+## 🛠️ Development
+
+### **Start Development Server**
 ```bash
-yarn add cbre-web-elements
+npm run dev
 ```
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### Using pnpm
-
+### **Build for Production**
 ```bash
-pnpm add cbre-web-elements
+npm run build
+npm start
 ```
 
-### Installing from GitHub
-
+### **Code Quality**
 ```bash
-npm install github:rizkinov/cbre-web-elements
+# Lint code
+npm run lint
+
+# Format code (if prettier is configured)
+# npm run format
 ```
 
-### Required Peer Dependencies
+## 📁 Project Structure
 
-Ensure you have the necessary peer dependencies installed:
+```
+landmark-deals/
+├── app/                          # Next.js App Router
+│   ├── admin/                    # Admin dashboard for deal management
+│   ├── deals/                    # Main deals listing and detail pages  
+│   ├── elements-example/         # Component showcase (optional)
+│   └── layout.tsx               # Root layout with CBRE theming
+├── src/
+│   ├── components/              # React components
+│   │   ├── admin/               # Admin-specific components
+│   │   ├── deals/               # Deal-related components
+│   │   ├── ui/                  # Base UI components (shadcn/ui)
+│   │   └── cbre/                # CBRE-styled components
+│   ├── hooks/                   # Custom React hooks
+│   ├── lib/                     # Utilities and configurations
+│   └── styles/                  # Global styles and theme
+├── public/                      # Static assets
+├── fonts/                       # CBRE brand fonts (Calibre, Financier)
+└── logos/                       # CBRE branding assets
+```
 
+## 🎨 Design System
+
+### **CBRE Brand Colors**
+| Color | Hex | Usage |
+|-------|-----|-------|
+| CBRE Green | `#003F2D` | Primary brand color, headers |
+| Accent Green | `#17E88F` | CTAs, highlights, success states |
+| Dark Green | `#012A2D` | Dark accents, navigation |
+| Dark Grey | `#435254` | Body text, secondary elements |
+| Light Grey | `#CAD1D3` | Borders, dividers |
+| Lighter Grey | `#E6E8E9` | Backgrounds, cards |
+
+### **Typography**
+- **Financier Display** - Headings and display text
+- **Calibre** - Body text and UI elements
+- **No rounded corners** - Sharp, professional aesthetic
+
+### **Components**
+All UI components follow CBRE design guidelines using the CBRE Web Elements library for consistent branding and user experience.
+
+## 🔧 Configuration
+
+### **Tailwind CSS**
+The application uses Tailwind with CBRE design tokens:
+- Custom color palette with CBRE brand colors
+- Typography scale with Financier and Calibre fonts  
+- Zero border radius for sharp, professional look
+- Responsive breakpoints optimized for real estate content
+
+### **Next.js**
+- **App Router** for modern routing and layouts
+- **Server Components** for optimized performance  
+- **Image Optimization** for property photos
+- **TypeScript** strict mode enabled
+
+## 📊 Database Schema
+
+### **Core Tables**
+- **`deals`** - Property transaction records
+- **`properties`** - Property information and details
+- **`locations`** - Geographic data and market information
+- **`asset_classes`** - Property types and classifications
+
+### **Features**
+- **Full-text search** across deal descriptions
+- **Geographic indexing** for location-based queries
+- **Image storage** integration with Supabase Storage
+- **Real-time updates** for new deal additions
+
+## 🚀 Deployment
+
+### **Vercel (Recommended)**
 ```bash
-npm install react@^19 react-dom@^19 next@^15 tailwindcss@^4
+# Deploy to Vercel
+npm install -g vercel
+vercel
+
+# Set environment variables in Vercel dashboard
+# Deploy with: vercel --prod
 ```
 
-**Note:** Due to current dependency compatibility with React 19, you might need to use the `--legacy-peer-deps` flag when installing dependencies in your project if you encounter peer dependency conflicts (e.g., `npm install --legacy-peer-deps`).
+### **Other Platforms**
+The application can be deployed to any platform supporting Next.js:
+- Netlify
+- Railway  
+- AWS Amplify
+- Docker containers
 
-## Usage
+### **Environment Variables**
+Ensure all Supabase environment variables are configured in your deployment platform.
 
-### Basic Import and Usage
+## 🤝 Contributing
 
-```jsx
-import { CBRE } from 'cbre-web-elements';
+### **Development Workflow**
+1. Create feature branch from `main`
+2. Make changes following code style guidelines
+3. Test thoroughly on local development server
+4. Submit pull request with detailed description
+5. Code review and approval process
+6. Merge to main and deploy
 
-function App() {
-  return (
-    <div>
-      <h1>My CBRE Application</h1>
-      <CBRE.CBREButton variant="primary">Click Me</CBRE.CBREButton>
-    </div>
-  );
-}
-```
+### **Code Standards**
+- TypeScript for type safety
+- ESLint configuration for code quality
+- Consistent component structure and naming
+- CBRE design system adherence
 
-### Tailwind CSS Configuration
+## 📜 License
 
-Add the CBRE theme to your Tailwind configuration. Note that this example uses ES Module syntax, which is required since the library uses `"type": "module"`.
+© 2024 CBRE. All rights reserved.
 
-```js
-// tailwind.config.js
-import { cbreTheme } from 'cbre-web-elements/theme'; // Assuming theme is exported this way
+This application is proprietary software developed for CBRE's internal use and client services. Unauthorized copying, modification, or distribution is prohibited.
 
-/** @type {import('tailwindcss').Config} */
-const config = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-    './app/**/*.{js,ts,jsx,tsx}', // Include if using Next.js App Router
-    './node_modules/cbre-web-elements/dist/**/*.js',
-  ],
-  theme: {
-    extend: {
-      ...cbreTheme, // Ensure cbreTheme is compatible with Tailwind v4 structure if needed
-    },
-  },
-  plugins: [],
-};
+---
 
-export default config;
-```
-
-### Namespace Organization
-
-The library uses namespaces to organize components and avoid naming conflicts:
-
-```jsx
-import { UI, CBRE, Blocks } from 'cbre-web-elements';
-
-// Base shadcn components
-<UI.Button>Base Button</UI.Button>
-
-// CBRE-styled components
-<CBRE.CBREButton>CBRE Button</CBRE.CBREButton>
-
-// Block components (higher-level compositions)
-<Blocks.CBRECtaBlock title="Ready to get started?">
-  <CBRE.CBREButton>Get in touch</CBRE.CBREButton>
-</Blocks.CBRECtaBlock>
-```
-
-## Components
-
-### User Interface Components
-
-CBRE Web Elements provides a comprehensive set of UI components:
-
-#### General
-
-- `CBREButton`: Primary action component with multiple variants
-- `CBREBadge`: Status indicators and labels
-- `CBREArrowButton`: Animated buttons with arrow indicators
-- `CBRECard`: Content containers with CBRE styling
-- `CBREStyledCard`: Enhanced cards with specific styling options
-
-#### Navigation
-
-- `CBREDropdownMenu`: Expandable menu for actions
-- `CBREResizable`: Resizable layout elements
-- `CBRESidebar`: Navigational sidebar with CBRE styling
-- `CBRETabs`: Tabbed interface for content organization
-- `CBREToggle`: Toggle component for on/off states
-- `CBREToggleGroup`: Group of toggles for selection
-- `CBRETooltip`: Informational hover tooltips
-
-#### Form Components
-
-- `CBRECheckbox`: Checkbox form element
-- `CBREDatePicker`: Date selection component
-- `CBRESelect`: Dropdown select component
-
-#### Data Display
-
-- `CBRETable`: Tabular data display
-- `CBREDataTable`: Enhanced table with sorting, pagination, etc.
-- `CBREAccordion`: Expandable content sections
-- `CBREChart`: Data visualization components
-- `CBREHoverCard`: Rich hover cards for additional information
-
-#### Feedback
-
-- `CBREToast`: Notifications and alerts
-- `CBRESeparator`: Visual dividers
-
-### Block Components
-
-Higher-level composed components:
-
-- `CBRECtaBlock`: Call-to-action block with title and content
-- `CBREQuoteBlock`: Quote display block with attribution
-
-## Project Structure
-
-The repository is organized as follows:
-
-```
-cbre-web-elements/
-├── src/                  # Source code
-│   ├── components/       # Component files
-│   │   ├── ui/           # Base shadcn components
-│   │   ├── cbre/         # CBRE-specific components
-│   │   └── blocks/       # Higher-level block components
-│   ├── lib/              # Utility functions
-│   ├── hooks/            # Custom React hooks
-│   └── styles/           # Global styles and theme
-├── app/                  # Demo application (Next.js App Router)
-│   └── elements-example/ # Component examples
-├── config/               # Configuration files
-├── scripts/              # Build and utility scripts
-└── public/               # Static assets
-```
-
-## Theming
-
-### CBRE Color Palette
-
-| Color | Hex |
-|-------|-----|
-| CBRE Green | `#003F2D` |
-| Accent Green | `#17E88F` |
-| Dark Green | `#012A2D` |
-| Dark Grey | `#435254` |
-| Light Grey | `#CAD1D3` |
-| Lighter Grey | `#E6E8E9` |
-
-### CSS Variables
-
-CBRE Web Elements uses CSS variables for theming that you can override:
-
-```css
-:root {
-  --cbre-green: #003F2D;
-  --accent-green: #17E88F;
-  --dark-green: #012A2D;
-  --dark-grey: #435254;
-  --light-grey: #CAD1D3;
-  --lighter-grey: #E6E8E9;
-}
-```
-
-### Customizing Components
-
-You can customize components using Tailwind classes:
-
-```jsx
-<CBRE.CBREButton 
-  className="bg-blue-500 hover:bg-blue-600 text-white"
->
-  Custom Button
-</CBRE.CBREButton>
-```
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
-
-### Code of Conduct
-
-This project adheres to a [Code of Conduct](CONDUCT.md). By participating, you are expected to uphold this code.
-
-## Development
-
-This project uses ES Modules (`"type": "module"`). Ensure your configuration files (like `next.config.js`, `tailwind.config.js`) use ES Module syntax (`import`/`export default`).
-
-### Setup
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/rizkinov/cbre-web-elements.git
-   cd cbre-web-elements
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-   *(The `--legacy-peer-deps` flag is currently needed due to `react-day-picker`'s peer dependency requirements with React 19.)*
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-### Building the Library
-
-```bash
-npm run build:lib
-```
-
-### Creating a New Component
-
-```bash
-npm run generateComp
-```
-
-### Running Tests
-
-```bash
-npm test
-```
-
-## License
-
-MIT © CBRE
+**Built with ❤️ by the CBRE Technology Team**
