@@ -8,7 +8,7 @@ The error you encountered happens because the views and functions depend on each
 
 ## **Step 1: Quick Start (Run This First)**
 
-Copy and paste the entire contents of `minimal-setup.sql` into your Supabase SQL Editor and run it.
+Copy and paste the entire contents of `database/setup/minimal-setup.sql` into your Supabase SQL Editor and run it.
 
 This will create:
 - ✅ Storage bucket `property-images`
@@ -183,7 +183,7 @@ DROP FUNCTION IF EXISTS get_storage_usage();
 -- Remove bucket (WARNING: This deletes all uploaded images!)
 DELETE FROM storage.buckets WHERE id = 'property-images';
 
--- Then re-run minimal-setup.sql
+-- Then re-run database/setup/minimal-setup.sql
 ```
 
 ---
