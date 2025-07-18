@@ -98,7 +98,12 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
       'China': 'CNY',
       'Korea': 'KRW',
       'Taiwan': 'TWD',
-      'Maldives': 'MVR'
+      'Maldives': 'MVR',
+      'India': 'INR',
+      'New Zealand': 'NZD',
+      'Philippines': 'PHP',
+      'Vietnam': 'VND',
+      'Thailand': 'THB'
     }
 
     const suggestedCurrency = currencyByCountry[formData.country as keyof typeof currencyByCountry] || 'USD'

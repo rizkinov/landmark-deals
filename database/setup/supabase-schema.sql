@@ -5,7 +5,7 @@ CREATE TABLE deals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   property_name VARCHAR NOT NULL,
   property_image_url TEXT,
-  country TEXT NOT NULL CHECK (country IN ('Japan', 'Korea', 'Taiwan', 'Hong Kong', 'China', 'Singapore', 'Maldives', 'Australia')),
+  country TEXT NOT NULL CHECK (country IN ('Japan', 'Korea', 'Taiwan', 'Hong Kong', 'China', 'Singapore', 'Maldives', 'Australia', 'India', 'New Zealand', 'Philippines', 'Vietnam', 'Thailand')),
   deal_price_usd DECIMAL(10,2) NOT NULL,
   deal_price_sgd DECIMAL(10,2) NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('Investment Property Sales', 'Services')),
