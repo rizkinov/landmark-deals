@@ -82,7 +82,11 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
   }
 
   // Apply price range filter (always use USD as the filter currency)
+  // Only apply price filtering to non-confidential deals
   if (filters.priceRange.min !== null || filters.priceRange.max !== null) {
+    // First filter out confidential deals when price filtering is applied
+    query = query.eq('is_confidential', false)
+    
     if (filters.priceRange.min !== null) {
       query = query.gte('deal_price_usd', filters.priceRange.min)
     }
