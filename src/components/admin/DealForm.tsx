@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Deal, CreateDealData, COUNTRIES, ASSET_CLASSES, SERVICES, QUARTERS } from '../../lib/types'
+import { Deal, CreateDealData, COUNTRIES, ASSET_CLASSES, SERVICES, QUARTERS, COUNTRY_CURRENCIES } from '../../lib/types'
 import { createDeal, updateDeal } from '../../lib/supabase'
 import * as CBRE from '../cbre'
 import { 
@@ -61,10 +61,11 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     }
   }, [deal, isEditing])
 
-  // Auto-calculate local currency amount based on USD and selected currency
+  // Auto-calculate local currency amount based on USD and selected currency (simplified)
   useEffect(() => {
     if (formData.deal_price_usd > 0 && formData.local_currency !== 'USD') {
-      const exchangeRates = {
+      // Simple exchange rate estimation - admin will adjust manually
+      const exchangeRates: Record<string, number> = {
         SGD: 1.35,
         AUD: 1.5,
         JPY: 150,
@@ -72,7 +73,12 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
         CNY: 7.2,
         KRW: 1300,
         TWD: 31,
-        MVR: 15.4
+        MVR: 15.4,
+        INR: 83,
+        NZD: 1.6,
+        PHP: 56,
+        VND: 24000,
+        THB: 36
       }
 
       const rate = exchangeRates[formData.local_currency as keyof typeof exchangeRates] || 1
@@ -88,24 +94,17 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     }
   }, [formData.deal_price_usd, formData.local_currency])
 
-  // Auto-set local currency based on country
+  // Auto-set default local currency based on country
   useEffect(() => {
-    const currencyByCountry = {
-      'Australia': 'AUD',
-      'Japan': 'JPY',
-      'Singapore': 'SGD',
-      'Hong Kong': 'HKD',
-      'China': 'CNY',
-      'Korea': 'KRW',
-      'Taiwan': 'TWD',
-      'Maldives': 'MVR'
-    }
-
-    const suggestedCurrency = currencyByCountry[formData.country as keyof typeof currencyByCountry] || 'USD'
-    if (formData.local_currency !== suggestedCurrency) {
+    const availableCurrencies = COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']
+    const defaultCurrency = availableCurrencies[0] // First currency is the local currency
+    
+    const validCurrencies = ['USD', 'SGD', 'AUD', 'JPY', 'HKD', 'CNY', 'KRW', 'TWD', 'MVR', 'INR', 'NZD', 'PHP', 'VND', 'THB']
+    
+    if (defaultCurrency && validCurrencies.includes(defaultCurrency) && formData.local_currency !== defaultCurrency) {
       setFormData(prev => ({
         ...prev,
-        local_currency: suggestedCurrency as any
+        local_currency: defaultCurrency as any
       }))
     }
   }, [formData.country])
@@ -375,17 +374,20 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="USD">USD (Millions)</SelectItem>
-                <SelectItem value="SGD">SGD (Millions)</SelectItem>
-                <SelectItem value="AUD">AUD (Millions)</SelectItem>
-                <SelectItem value="JPY">JPY (Billions)</SelectItem>
-                <SelectItem value="HKD">HKD (Millions)</SelectItem>
-                <SelectItem value="CNY">CNY (Millions)</SelectItem>
-                <SelectItem value="KRW">KRW (Billions)</SelectItem>
-                <SelectItem value="TWD">TWD (Billions)</SelectItem>
-                <SelectItem value="MVR">MVR (Millions)</SelectItem>
+                {(COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']).map(currency => {
+                  const isHighValueCurrency = ['JPY', 'KRW', 'TWD', 'VND'].includes(currency)
+                  const unit = isHighValueCurrency ? 'Billions' : 'Millions'
+                  return (
+                    <SelectItem key={currency} value={currency}>
+                      {currency} ({unit})
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </CBRE.CBRESelect>
+            <p className="text-xs text-gray-500 mt-1">
+              Available currencies for {formData.country}
+            </p>
           </div>
 
           <div>

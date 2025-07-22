@@ -5,9 +5,9 @@ export interface Deal {
   property_name: string
   property_image_url?: string | null
   property_images?: string[]
-  country: 'Japan' | 'Korea' | 'Taiwan' | 'Hong Kong' | 'China' | 'Singapore' | 'Maldives' | 'Australia'
+  country: 'Japan' | 'Korea' | 'Taiwan' | 'Hong Kong' | 'China' | 'Singapore' | 'Maldives' | 'Australia' | 'India' | 'New Zealand' | 'Philippines' | 'Vietnam' | 'Thailand'
   deal_price_usd: number // in millions
-  local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
+  local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
   local_currency_amount?: number // in millions (or appropriate unit for currency)
   asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
   services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales'
@@ -57,7 +57,7 @@ export type AssetClass = Deal['asset_class']
 export type Services = Deal['services']
 
 export const COUNTRIES: Country[] = [
-  'Japan', 'Korea', 'Taiwan', 'Hong Kong', 'China', 'Singapore', 'Maldives', 'Australia'
+  'Japan', 'Korea', 'Taiwan', 'Hong Kong', 'China', 'Singapore', 'Maldives', 'Australia', 'India', 'New Zealand', 'Philippines', 'Vietnam', 'Thailand'
 ]
 
 export const ASSET_CLASSES: AssetClass[] = [
@@ -93,7 +93,12 @@ export const COUNTRY_FLAGS: Record<Country, string> = {
   'China': '🇨🇳',
   'Singapore': '🇸🇬',
   'Maldives': '🇲🇻',
-  'Australia': '🇦🇺'
+  'Australia': '🇦🇺',
+  'India': '🇮🇳',
+  'New Zealand': '🇳🇿',
+  'Philippines': '🇵🇭',
+  'Vietnam': '🇻🇳',
+  'Thailand': '🇹🇭'
 }
 
 export const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
@@ -138,7 +143,7 @@ export interface CreateDealData {
   property_image_url?: string
   country: Country
   deal_price_usd: number
-  local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR'
+  local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
   local_currency_amount: number
   asset_class: AssetClass
   services: Services
@@ -151,4 +156,21 @@ export interface CreateDealData {
 
 export interface UpdateDealData extends Partial<CreateDealData> {
   id: string
+}
+
+// Country to available currencies mapping
+export const COUNTRY_CURRENCIES: Record<Country, string[]> = {
+  'Australia': ['AUD', 'USD'],
+  'Japan': ['JPY', 'USD'],
+  'Singapore': ['SGD', 'USD'],
+  'Hong Kong': ['HKD', 'USD'],
+  'China': ['CNY', 'USD'],
+  'Korea': ['KRW', 'USD'],
+  'Taiwan': ['TWD', 'USD'],
+  'Maldives': ['MVR', 'USD'],
+  'India': ['INR', 'USD'],
+  'New Zealand': ['NZD', 'USD'],
+  'Philippines': ['PHP', 'USD'],
+  'Vietnam': ['VND', 'USD'],
+  'Thailand': ['THB', 'USD']
 } 
