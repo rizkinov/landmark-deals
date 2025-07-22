@@ -80,11 +80,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
         <div className="mb-4">
           {deal.is_confidential ? (
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              <span className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
-                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                  <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+              <span>
                 Confidential
               </span>
             </div>
@@ -105,7 +101,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
                   )
                 })()}
               </div>
-              {deal.local_currency !== 'USD' && (
+              {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
                 <div className="text-lg text-gray-600">
                   {formatCurrency(deal.local_currency_amount, deal.local_currency).formatted}
                 </div>
