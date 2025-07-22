@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { fetchDeals, deleteDeal } from '../../../src/lib/supabase'
@@ -57,6 +57,23 @@ export default function AdminDealsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const router = useRouter()
+  
+  // Refs for synchronized scrolling
+  const topScrollRef = useRef<HTMLDivElement>(null)
+  const tableScrollRef = useRef<HTMLDivElement>(null)
+  
+  // Synchronized scrolling functions
+  const handleTopScroll = () => {
+    if (topScrollRef.current && tableScrollRef.current) {
+      tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft
+    }
+  }
+  
+  const handleTableScroll = () => {
+    if (topScrollRef.current && tableScrollRef.current) {
+      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft
+    }
+  }
 
   useEffect(() => {
     loadDeals()
@@ -151,7 +168,26 @@ export default function AdminDealsPage() {
 
       {/* Deals Table */}
       <CBRE.CBRECard className="overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Top Horizontal Scrollbar */}
+        <div className="border-b border-gray-100">
+          <div 
+            ref={topScrollRef}
+            className="overflow-x-auto overflow-y-hidden h-4"
+            onScroll={handleTopScroll}
+          >
+            <div className="min-w-full h-1" style={{ width: 'max-content' }}>
+              {/* Dummy content to match table width */}
+              <div className="h-1" style={{ minWidth: '1400px' }}></div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Table Container */}
+        <div 
+          ref={tableScrollRef}
+          className="overflow-x-auto"
+          onScroll={handleTableScroll}
+        >
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
