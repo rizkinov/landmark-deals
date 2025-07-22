@@ -18,6 +18,7 @@ export interface Deal {
   location: string // Required: city/town (e.g., "Marina Bay, Singapore")
   remarks?: string | null // Optional: additional notes
   location_remarks?: string | null // Optional: location-specific notes
+  is_confidential?: boolean // Optional: whether pricing is confidential
   created_at: string
   updated_at?: string
   last_edited_at?: string
@@ -152,6 +153,7 @@ export interface CreateDealData {
   seller: string
   location: string
   remarks?: string
+  is_confidential?: boolean
 }
 
 export interface UpdateDealData extends Partial<CreateDealData> {

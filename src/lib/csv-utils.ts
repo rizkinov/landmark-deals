@@ -20,6 +20,7 @@ export function exportDealsToCSV(deals: Deal[]): string {
     'Buyer',
     'Seller',
     'Property Image URL',
+    'Is Confidential',
     'Created At'
   ]
 
@@ -37,6 +38,7 @@ export function exportDealsToCSV(deals: Deal[]): string {
     `"${deal.buyer}"`,
     `"${deal.seller}"`,
     deal.property_image_url || '',
+    deal.is_confidential ? 'TRUE' : 'FALSE',
     deal.created_at
   ])
 
@@ -121,7 +123,8 @@ export function parseCSVToDeals(csvContent: string): CreateDealData[] {
         deal_date: cleanValue(values[getColumnIndex(headers, 'Deal Date')]),
         buyer: cleanValue(values[getColumnIndex(headers, 'Buyer')]),
         seller: cleanValue(values[getColumnIndex(headers, 'Seller')]),
-        property_image_url: cleanValue(values[getColumnIndex(headers, 'Property Image URL')]) || '/default-photo.jpeg'
+        property_image_url: cleanValue(values[getColumnIndex(headers, 'Property Image URL')]) || '/default-photo.jpeg',
+        is_confidential: cleanValue(values[getColumnIndex(headers, 'Is Confidential')]).toUpperCase() === 'TRUE'
       }
 
       // Validate required fields
@@ -189,7 +192,8 @@ export function generateCSVTemplate(): string {
     'Deal Date',
     'Buyer',
     'Seller',
-    'Property Image URL'
+    'Property Image URL',
+    'Is Confidential'
   ]
 
   const sampleRow = [
@@ -203,7 +207,8 @@ export function generateCSVTemplate(): string {
     'Q3 2024',
     'CapitaLand',
     'CBRE',
-    '/default-photo.jpeg'
+    '/default-photo.jpeg',
+    'FALSE'
   ]
 
   return [headers.join(','), sampleRow.join(',')].join('\n')

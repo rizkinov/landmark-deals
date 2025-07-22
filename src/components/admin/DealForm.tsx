@@ -38,6 +38,7 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     seller: '',
     location: '',
     remarks: '',
+    is_confidential: false,
   })
 
   // Populate form if editing
@@ -57,6 +58,7 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
         seller: deal.seller,
         location: deal.location,
         remarks: deal.remarks || '',
+        is_confidential: deal.is_confidential || false,
       })
     }
   }, [deal, isEditing])
@@ -97,14 +99,12 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
   // Auto-set default local currency based on country
   useEffect(() => {
     const availableCurrencies = COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']
-    const defaultCurrency = availableCurrencies[0] // First currency is the local currency
+    const suggestedCurrency = availableCurrencies[0] // First currency is the local currency
     
-    const validCurrencies = ['USD', 'SGD', 'AUD', 'JPY', 'HKD', 'CNY', 'KRW', 'TWD', 'MVR', 'INR', 'NZD', 'PHP', 'VND', 'THB']
-    
-    if (defaultCurrency && validCurrencies.includes(defaultCurrency) && formData.local_currency !== defaultCurrency) {
+    if (suggestedCurrency && formData.local_currency !== suggestedCurrency) {
       setFormData(prev => ({
         ...prev,
-        local_currency: defaultCurrency as any
+        local_currency: suggestedCurrency as any
       }))
     }
   }, [formData.country])
@@ -403,6 +403,17 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
               placeholder="Auto-calculated"
             />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <CBRE.Checkbox
+              id="is_confidential"
+              checked={formData.is_confidential || false}
+              onCheckedChange={(checked) => handleInputChange('is_confidential', checked)}
+            />
+            <label htmlFor="is_confidential" className="text-sm font-medium text-gray-700">
+              Mark pricing as confidential
+            </label>
           </div>
 
           <div>

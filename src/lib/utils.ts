@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 // Currency formatting utility - uses symbols only (no redundant currency codes)
 export function formatCurrency(
   amount: number,
-  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR',
+  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB',
   options: {
     showDecimals?: boolean
     unit?: 'M' | 'B' | '' // M for millions, B for billions
@@ -27,7 +27,12 @@ export function formatCurrency(
     CNY: 'CN¥', // Chinese Yuan - distinguished from Japanese Yen
     KRW: '₩',
     TWD: 'NT$',
-    MVR: 'Rf'
+    MVR: 'Rf',
+    INR: '₹',
+    NZD: 'NZ$',
+    PHP: '₱',
+    VND: '₫',
+    THB: '฿'
   }
 
   // Determine appropriate decimal places and unit
@@ -51,8 +56,24 @@ export function formatCurrency(
     } else {
       formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
     }
+  } else if (currency === 'INR' || currency === 'VND') {
+    // Indian Rupee and Vietnamese Dong typically don't use decimals and are often in billions
+    if (amount >= 1000 && unit === 'M') {
+      formattedAmount = (amount / 1000).toFixed(0)
+      displayUnit = 'B'
+    } else {
+      formattedAmount = amount.toFixed(0)
+    }
+  } else if (currency === 'PHP') {
+    // Philippine Peso - often in billions for large deals
+    if (amount >= 1000 && unit === 'M') {
+      formattedAmount = (amount / 1000).toFixed(1)
+      displayUnit = 'B'
+    } else {
+      formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
+    }
   } else {
-    // Other currencies use decimals
+    // Other currencies (USD, SGD, AUD, HKD, CNY, MVR, NZD, THB) use decimals
     formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
   }
 
@@ -72,7 +93,7 @@ export function formatCurrency(
 // Backward compatible helper that returns string only
 export function formatCurrencyString(
   amount: number,
-  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR',
+  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB',
   options: {
     showDecimals?: boolean
     unit?: 'M' | 'B' | ''
