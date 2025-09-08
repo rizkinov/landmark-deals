@@ -136,12 +136,20 @@ export default function AdminDealsPage() {
             {filteredDeals.length} deals total
           </p>
         </div>
-        <Link href="/admin/deals/new">
-          <CBRE.CBREButton variant="primary" className="gap-2">
-            <PlusIcon className="w-4 h-4" />
-            Add New Deal
-          </CBRE.CBREButton>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/deals/new">
+            <CBRE.CBREButton variant="primary" className="gap-2">
+              <PlusIcon className="w-4 h-4" />
+              Add Traditional Deal
+            </CBRE.CBREButton>
+          </Link>
+          <Link href="/admin/deals/capital-advisors/new">
+            <CBRE.CBREButton variant="outline" className="gap-2">
+              <PlusIcon className="w-4 h-4" />
+              Add Capital Advisors Project
+            </CBRE.CBREButton>
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -177,7 +185,7 @@ export default function AdminDealsPage() {
           >
             <div className="min-w-full h-1" style={{ width: 'max-content' }}>
               {/* Dummy content to match table width */}
-              <div className="h-1" style={{ minWidth: '1400px' }}></div>
+              <div className="h-1" style={{ minWidth: '1800px' }}></div>
             </div>
           </div>
         </div>
@@ -191,7 +199,7 @@ export default function AdminDealsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-64">
                   Property
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -227,11 +235,11 @@ export default function AdminDealsPage() {
                         propertyName={deal.property_name}
                       />
                       
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                      <div className="ml-4 min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate max-w-48" title={deal.property_name}>
                           {deal.property_name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 truncate max-w-48" title={`${deal.buyer} ← ${deal.seller}`}>
                           {deal.buyer} ← {deal.seller}
                         </div>
                       </div>
@@ -291,7 +299,7 @@ export default function AdminDealsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex gap-2">
-                      <Link href={`/admin/deals/${deal.id}/edit`}>
+                      <Link href={deal.services === 'Capital Advisors' ? `/admin/deals/capital-advisors/${deal.id}/edit` : `/admin/deals/${deal.id}/edit`}>
                         <CBRE.CBREButton variant="outline" size="sm" className="gap-1">
                           <Pencil1Icon className="w-3 h-3" />
                           Edit
@@ -321,12 +329,20 @@ export default function AdminDealsPage() {
                 {searchTerm ? 'Try adjusting your search criteria' : 'Get started by adding your first deal'}
               </p>
               {!searchTerm && (
-                <Link href="/admin/deals/new">
-                  <CBRE.CBREButton variant="primary" className="gap-2">
-                    <PlusIcon className="w-4 h-4" />
-                    Add New Deal
-                  </CBRE.CBREButton>
-                </Link>
+                <div className="flex gap-2 justify-center">
+                  <Link href="/admin/deals/new">
+                    <CBRE.CBREButton variant="primary" className="gap-2">
+                      <PlusIcon className="w-4 h-4" />
+                      Add Traditional Deal
+                    </CBRE.CBREButton>
+                  </Link>
+                  <Link href="/admin/deals/capital-advisors/new">
+                    <CBRE.CBREButton variant="outline" className="gap-2">
+                      <PlusIcon className="w-4 h-4" />
+                      Add Capital Advisors Project
+                    </CBRE.CBREButton>
+                  </Link>
+                </div>
               )}
             </div>
           )}

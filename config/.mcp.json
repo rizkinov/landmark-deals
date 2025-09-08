@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=lqflnbviepmooteojlex"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://lqflnbviepmooteojlex.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZmxuYnZpZXBtb290ZW9qbGV4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDE0MjIxNiwiZXhwIjoyMDY1NzE4MjE2fQ.kZSx6g0FIYAScDXQ0PxmcbLtSrsgqjwPjYWfwhQt-ts"
+      }
+    }
+  }
+}

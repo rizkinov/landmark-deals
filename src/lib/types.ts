@@ -19,6 +19,12 @@ export interface Deal {
   remarks?: string | null // Optional: additional notes
   location_remarks?: string | null // Optional: location-specific notes
   is_confidential?: boolean // Optional: whether pricing is confidential
+  // Capital Advisors specific fields
+  project_title?: string | null // For Capital Advisors: main project title
+  project_subtitle?: string | null // For Capital Advisors: project subtitle
+  content_html?: string | null // For Capital Advisors: rich text content
+  gallery_images?: string[] | null // For Capital Advisors: array of gallery image URLs
+  slug?: string | null // For Capital Advisors: URL-friendly identifier
   created_at: string
   updated_at?: string
   last_edited_at?: string
@@ -154,10 +160,45 @@ export interface CreateDealData {
   location: string
   remarks?: string
   is_confidential?: boolean
+  // Capital Advisors specific fields
+  project_title?: string
+  project_subtitle?: string
+  content_html?: string
+  gallery_images?: string[]
 }
 
 export interface UpdateDealData extends Partial<CreateDealData> {
   id: string
+}
+
+// Capital Advisors specific types
+export interface CapitalAdvisorsProject extends Deal {
+  services: 'Capital Advisors'
+  project_title: string
+  project_subtitle: string
+  slug: string
+  content_html?: string | null
+  gallery_images?: string[] | null
+}
+
+export interface CreateCapitalAdvisorsData {
+  project_title: string
+  project_subtitle: string
+  content_html?: string
+  gallery_images?: string[]
+  property_image_url?: string
+  country: Country
+  deal_date: string
+  location: string
+  // Optional traditional deal fields for Capital Advisors
+  deal_price_usd?: number
+  local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
+  local_currency_amount?: number
+  asset_class?: AssetClass
+  buyer?: string
+  seller?: string
+  remarks?: string
+  is_confidential?: boolean
 }
 
 // Country to available currencies mapping

@@ -1,21 +1,15 @@
 'use client'
 
-import { Deal, ASSET_CLASS_COLORS, SERVICES_COLORS } from '../../lib/types'
-import { formatCurrency } from '../../lib/utils'
+import { Deal, SERVICES_COLORS, ASSET_CLASS_COLORS } from '../../lib/types'
 import * as CBRE from '../cbre'
-import { CapitalAdvisorCard } from './CapitalAdvisorCard'
+import Link from 'next/link'
 
-interface DealCardProps {
+interface CapitalAdvisorCardProps {
   deal: Deal
   searchTerm?: string
 }
 
-export function DealCard({ deal, searchTerm }: DealCardProps) {
-  // If this is a Capital Advisors deal, render the specialized card
-  if (deal.services === 'Capital Advisors') {
-    return <CapitalAdvisorCard deal={deal} searchTerm={searchTerm} />
-  }
-
+export function CapitalAdvisorCard({ deal, searchTerm }: CapitalAdvisorCardProps) {
   // Highlight search terms in text
   const highlightText = (text: string, searchTerm?: string) => {
     if (!searchTerm) return text
@@ -39,7 +33,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
         {deal.property_image_url ? (
           <img
             src={deal.property_image_url}
-            alt={deal.property_name}
+            alt={deal.project_title || deal.property_name}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             loading="lazy"
           />
@@ -62,12 +56,19 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
         </div>
       </div>
 
-      {/* Card Content */}
+      {/* Card Content - Simplified for Capital Advisors */}
       <div className="p-6">
-        {/* Property Name */}
-        <h3 className="text-xl font-bold text-[#003F2D] mb-2 line-clamp-2">
-          {highlightText(deal.property_name, searchTerm)}
+        {/* Project Title */}
+        <h3 className="text-xl font-bold text-[#003F2D] mb-3 line-clamp-2">
+          {highlightText(deal.project_title || deal.property_name, searchTerm)}
         </h3>
+
+        {/* Project Subtitle */}
+        {deal.project_subtitle && (
+          <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
+            {highlightText(deal.project_subtitle, searchTerm)}
+          </p>
+        )}
 
         {/* Location */}
         <div className="mb-4">
@@ -82,41 +83,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
           </div>
         </div>
 
-        {/* Deal Price */}
-        <div className="mb-4">
-          {deal.is_confidential ? (
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              <span>
-                Confidential
-              </span>
-            </div>
-          ) : (
-            <>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {(() => {
-                  const currencyResult = formatCurrency(deal.deal_price_usd, 'USD', { includeBillionAnnotation: true })
-                  return (
-                    <span>
-                      {currencyResult.formatted}
-                      {currencyResult.billionAnnotation && (
-                        <span className="text-base font-normal text-gray-600 ml-1">
-                          ({currencyResult.billionAnnotation})
-                        </span>
-                      )}
-                    </span>
-                  )
-                })()}
-              </div>
-              {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
-                <div className="text-lg text-gray-600">
-                  {formatCurrency(deal.local_currency_amount, deal.local_currency).formatted}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Asset Class & Services */}
+        {/* Asset Class and Services Badges */}
         <div className="mb-4 space-y-2">
           {/* Asset Class - Colorful */}
           <div className="flex">
@@ -139,29 +106,27 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
           </div>
         </div>
 
-        {/* Deal Details Table */}
-        <div className="border-t pt-4">
-          <div className="grid grid-cols-1 gap-2 text-sm">
-            <div className="flex justify-between items-center py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Date:</span>
-              <span className="font-semibold">{deal.deal_date}</span>
-            </div>
-            <div className="flex justify-between items-start py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Buyer:</span>
-              <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.buyer, searchTerm)}
-              </span>
-            </div>
-            <div className="flex justify-between items-start py-1">
-              <span className="text-gray-500 font-medium">Seller:</span>
-              <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.seller, searchTerm)}
-              </span>
-            </div>
-          </div>
+        {/* Date and Read More */}
+        <div className="flex justify-between items-center pt-4 border-t">
+          <span className="text-sm text-gray-500 font-medium">
+            {deal.deal_date}
+          </span>
+          
+          {/* Read More Button - Opens in new tab */}
+          {deal.slug ? (
+            <Link href={`/deals/capital-advisors/${deal.slug}`} target="_blank" rel="noopener noreferrer">
+              <CBRE.CBREButton variant="view-more" size="sm">
+                Read More
+              </CBRE.CBREButton>
+            </Link>
+          ) : (
+            <CBRE.CBREButton variant="view-more" size="sm" disabled>
+              Coming Soon
+            </CBRE.CBREButton>
+          )}
         </div>
 
-        {/* Remarks Section */}
+        {/* Remarks Section (if present) */}
         {deal.remarks && (
           <div className="border-t pt-4 mt-4">
             <div className="text-sm">
@@ -170,9 +135,9 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
                   <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"/>
                   <path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>
                 </svg>
-                Remarks:
+                Notes:
               </div>
-              <div className="text-gray-700 leading-relaxed">
+              <div className="text-gray-700 leading-relaxed line-clamp-2">
                 {highlightText(deal.remarks, searchTerm)}
               </div>
             </div>
@@ -181,4 +146,4 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
       </div>
     </CBRE.CBRECard>
   )
-} 
+}
