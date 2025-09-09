@@ -66,6 +66,9 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             <CBRE.CBREBadge variant="outline" className="text-sm">
               Capital Advisors
             </CBRE.CBREBadge>
+            <CBRE.CBREBadge variant="default" className="text-sm">
+              {project.asset_class}
+            </CBRE.CBREBadge>
             <span className="text-gray-500 font-calibre">{project.deal_date}</span>
           </div>
         </div>
