@@ -77,18 +77,67 @@ BEGIN
   5.80, 15800, 'Sony Corporation', 25, 518.12, 'JPY'
 ),
 (
-  'Westfield Shopping Plaza', 'Australia', 67.8, 'AUD', 101.7, 'Retail', 'Sale & Leaseback',
-  'Q4 2023', 'Charter Hall Retail REIT', 'Westfield Corporation', 'Parramatta, NSW',
-  'Major retail center with stable cash flows and established tenant base',
+  'Central Plaza Office Complex', 'Hong Kong', 78.5, 'HKD', 612.3, 'Office', 'Sale & Leaseback',
+  'Q4 2023', 'Link REIT', 'HSBC Bank', 'Central, Hong Kong',
+  'Prime office space with long-term banking tenant and stable returns',
   '/default-photo.jpeg', false,
-  7.15, 28500, 'Westfield Corporation', 12, 4.85, 'AUD'
+  6.45, 18600, 'HSBC Bank', 20, 39.49, 'HKD'
 ),
 (
-  'Orchard Road Commercial Tower', 'Singapore', 156.8, 'SGD', 211.7, 'Office', 'Sale & Leaseback',
-  'Q1 2024', 'Frasers Property', 'UOB Bank', 'Orchard Road, Singapore',
-  'Premium office space in prime CBD location with anchor tenant',
+  'Gangnam Corporate Tower', 'Korea', 65.4, 'KRW', 85280, 'Office', 'Sale & Leaseback',
+  'Q1 2024', 'Lotte REIT', 'Samsung Electronics', 'Gangnam-gu, Seoul',
+  'Technology headquarters with corporate tenant and modern facilities',
   '/default-photo.jpeg', false,
-  4.95, 22400, 'UOB Bank', 18, 7.76, 'SGD'
+  5.95, 24500, 'Samsung Electronics', 15, 5072, 'KRW'
+),
+(
+  'Mumbai Financial Center', 'India', 45.8, 'INR', 3800, 'Office', 'Sale & Leaseback',
+  'Q2 2024', 'Embassy REIT', 'Tata Consultancy Services', 'Bandra-Kurla Complex, Mumbai',
+  'Premium IT office space with established technology tenant',
+  '/default-photo.jpeg', false,
+  8.25, 32000, 'Tata Consultancy Services', 18, 313.5, 'INR'
+),
+(
+  'Taipei Business District', 'Taiwan', 52.3, 'TWD', 1674, 'Office', 'Sale & Leaseback',
+  'Q3 2024', 'Cathay REIT', 'Foxconn Technology', 'Xinyi District, Taipei',
+  'Modern office complex with technology manufacturing tenant',
+  '/default-photo.jpeg', false,
+  6.80, 21400, 'Foxconn Technology', 12, 113.8, 'TWD'
+),
+(
+  'Shanghai Commerce Hub', 'China', 67.2, 'CNY', 484, 'Retail', 'Sale & Leaseback',
+  'Q4 2024', 'China REIT', 'Alibaba Group', 'Pudong, Shanghai',
+  'Strategic retail and logistics facility with e-commerce giant tenant',
+  '/default-photo.jpeg', false,
+  7.35, 45000, 'Alibaba Group', 25, 35.6, 'CNY'
+),
+(
+  'Auckland Retail Center', 'New Zealand', 34.2, 'NZD', 58.1, 'Retail', 'Sale & Leaseback',
+  'Q1 2024', 'Kiwi Property', 'The Warehouse Group', 'Auckland CBD',
+  'Major retail anchor with established New Zealand retailer',
+  '/default-photo.jpeg', false,
+  8.10, 15600, 'The Warehouse Group', 10, 4.71, 'NZD'
+),
+(
+  'Bangkok Logistics Park', 'Thailand', 38.6, 'THB', 1390, 'Industrial & Logistics', 'Sale & Leaseback',
+  'Q2 2024', 'Frasers Property Thailand', 'CP All', 'Lat Phrao, Bangkok',
+  'Distribution center with major convenience store chain tenant',
+  '/default-photo.jpeg', false,
+  7.90, 28000, 'CP All', 15, 109.8, 'THB'
+),
+(
+  'Ho Chi Minh Manufacturing Hub', 'Vietnam', 42.1, 'VND', 1010000, 'Industrial & Logistics', 'Sale & Leaseback',
+  'Q3 2024', 'VinaCapital Real Estate', 'Samsung Vietnam', 'Thu Duc City, Ho Chi Minh',
+  'Electronics manufacturing facility with multinational tenant',
+  '/default-photo.jpeg', false,
+  8.75, 35000, 'Samsung Vietnam', 20, 88360, 'VND'
+),
+(
+  'Manila Corporate Center', 'Philippines', 29.8, 'PHP', 1668, 'Office', 'Sale & Leaseback',
+  'Q4 2024', 'Ayala Land REIT', 'Globe Telecom', 'Makati, Manila',
+  'Telecommunications headquarters with established Filipino telecom leader',
+  '/default-photo.jpeg', false,
+  9.25, 19500, 'Globe Telecom', 14, 154.3, 'PHP'
 );
   END IF;
 END $$;

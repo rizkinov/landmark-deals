@@ -241,6 +241,160 @@ BEGIN
   4150.0,
   'N/A',
   'N/A'
+),
+-- Taiwan (TWD)
+(
+  'Taipei Financial District Tower',
+  'Taiwan',
+  'Debt & Structured Finance',
+  'Q1 2024',
+  'Xinyi District, Taipei',
+  'Office',
+  'Senior Investment',
+  'Acquisition Finance',
+  1600.0,
+  'TWD',
+  65,
+  '5 years',
+  'Cathay Real Estate',
+  'Bank Lender',
+  50.0, -- USD equivalent (1600 / 32)
+  'TWD',
+  1600.0,
+  'N/A',
+  'N/A'
+),
+-- China (CNY)
+(
+  'Shanghai Logistics Center',
+  'China',
+  'Debt & Structured Finance',
+  'Q4 2023',
+  'Pudong, Shanghai',
+  'Industrial & Logistics',
+  'Construction Finance',
+  'Development Finance',
+  360.0,
+  'CNY',
+  70,
+  '3 years',
+  'China Merchants Group',
+  'Government Fund',
+  50.0, -- USD equivalent (360 / 7.2)
+  'CNY',
+  360.0,
+  'N/A',
+  'N/A'
+),
+-- New Zealand (NZD)
+(
+  'Auckland Mixed-Use Development',
+  'New Zealand',
+  'Debt & Structured Finance',
+  'Q2 2024',
+  'Auckland CBD',
+  'Residential / Multifamily',
+  'Bridge Loan',
+  'Land Bank & Construction',
+  85.0,
+  'NZD',
+  60,
+  '2 years',
+  'Kiwi Property Group',
+  'Non Bank Lender',
+  50.0, -- USD equivalent (85 / 1.7)
+  'NZD',
+  85.0,
+  'N/A',
+  'N/A'
+),
+-- Thailand (THB)
+(
+  'Bangkok Retail Complex',
+  'Thailand',
+  'Debt & Structured Finance',
+  'Q3 2024',
+  'Sukhumvit, Bangkok',
+  'Retail',
+  'Mezzanine Finance',
+  'Refinancing',
+  1800.0,
+  'THB',
+  55,
+  '4 years',
+  'Central Pattana',
+  'Private Equity',
+  50.0, -- USD equivalent (1800 / 36)
+  'THB',
+  1800.0,
+  'N/A',
+  'N/A'
+),
+-- Vietnam (VND)
+(
+  'Ho Chi Minh Office Tower',
+  'Vietnam',
+  'Debt & Structured Finance',
+  'Q1 2024',
+  'District 1, Ho Chi Minh City',
+  'Office',
+  'Senior Investment',
+  'Development Finance',
+  1200000.0,
+  'VND',
+  75,
+  '6 years',
+  'Vinhomes Corporation',
+  'Bank Lender',
+  50.0, -- USD equivalent (1200000 / 24000)
+  'VND',
+  1200000.0,
+  'N/A',
+  'N/A'
+),
+-- Philippines (PHP)
+(
+  'Manila Business Park',
+  'Philippines',
+  'Debt & Structured Finance',
+  'Q4 2024',
+  'Makati, Manila',
+  'Office',
+  'Construction Finance',
+  'Land Bank & Construction',
+  2800.0,
+  'PHP',
+  65,
+  '5 years',
+  'Ayala Land Inc.',
+  'Bank Lender',
+  50.0, -- USD equivalent (2800 / 56)
+  'PHP',
+  2800.0,
+  'N/A',
+  'N/A'
+),
+-- Maldives (MVR)
+(
+  'Male Resort Development',
+  'Maldives',
+  'Debt & Structured Finance',
+  'Q2 2024',
+  'Male Atoll',
+  'Hospitality',
+  'Bridge Loan',
+  'Acquisition Finance',
+  770.0,
+  'MVR',
+  50,
+  '3 years',
+  'Universal Enterprises',
+  'Non Bank Lender',
+  50.0, -- USD equivalent (770 / 15.4)
+  'MVR',
+  770.0,
+  'N/A',
+  'N/A'
 );
 
 -- Rollback instructions (commented out)
