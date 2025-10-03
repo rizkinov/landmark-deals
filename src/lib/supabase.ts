@@ -61,9 +61,9 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
     .from('deals')
     .select('*', { count: 'exact' })
 
-  // Apply search filter
+  // Apply search filter - includes D&SF and Sale & Leaseback specific fields
   if (filters.search) {
-    query = query.or(`property_name.ilike.%${filters.search}%,buyer.ilike.%${filters.search}%,seller.ilike.%${filters.search}%,location.ilike.%${filters.search}%,remarks.ilike.%${filters.search}%`)
+    query = query.or(`property_name.ilike.%${filters.search}%,buyer.ilike.%${filters.search}%,seller.ilike.%${filters.search}%,location.ilike.%${filters.search}%,remarks.ilike.%${filters.search}%,borrower.ilike.%${filters.search}%,purpose.ilike.%${filters.search}%,deal_type.ilike.%${filters.search}%,lender_source.ilike.%${filters.search}%,tenant.ilike.%${filters.search}%`)
   }
 
   // Apply country filter
@@ -160,6 +160,27 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
 }
 
 export async function createDeal(dealData: CreateDealData): Promise<Deal> {
+  // Validate service-specific fields
+  if (dealData.services === 'Debt & Structured Finance') {
+    if (!dealData.deal_type || !dealData.purpose || !dealData.loan_size_local ||
+        !dealData.loan_size_currency || !dealData.loan_term || !dealData.borrower ||
+        !dealData.lender_source) {
+      throw new Error('All Debt & Structured Finance fields are required when service type is D&SF')
+    }
+
+    // Set buyer/seller to N/A for D&SF deals if not provided
+    dealData.buyer = dealData.buyer || 'N/A'
+    dealData.seller = dealData.seller || 'N/A'
+  } else if (dealData.services === 'Sale & Leaseback') {
+    if (!dealData.yield_percentage || !dealData.gla_sqm || !dealData.tenant ||
+        !dealData.lease_term_years || !dealData.annual_rent || !dealData.rent_currency) {
+      throw new Error('All Sale & Leaseback fields are required when service type is Sale & Leaseback')
+    }
+
+    // Set seller to tenant for Sale & Leaseback deals
+    dealData.seller = dealData.tenant
+  }
+
   const { data, error } = await supabase
     .from('deals')
     .insert([dealData])
@@ -175,6 +196,39 @@ export async function createDeal(dealData: CreateDealData): Promise<Deal> {
 }
 
 export async function updateDeal(id: string, dealData: Partial<UpdateDealData>): Promise<Deal> {
+  // Validate service-specific fields if service type is being updated
+  if (dealData.services === 'Debt & Structured Finance') {
+    // Get current deal data to check existing fields
+    const currentDeal = await fetchDealById(id)
+    if (currentDeal) {
+      const mergedData = { ...currentDeal, ...dealData }
+
+      if (!mergedData.deal_type || !mergedData.purpose || !mergedData.loan_size_local ||
+          !mergedData.loan_size_currency || !mergedData.loan_term || !mergedData.borrower ||
+          !mergedData.lender_source) {
+        throw new Error('All Debt & Structured Finance fields are required when service type is D&SF')
+      }
+    }
+
+    // Set buyer/seller to N/A for D&SF deals if not provided
+    dealData.buyer = dealData.buyer || 'N/A'
+    dealData.seller = dealData.seller || 'N/A'
+  } else if (dealData.services === 'Sale & Leaseback') {
+    // Get current deal data to check existing fields
+    const currentDeal = await fetchDealById(id)
+    if (currentDeal) {
+      const mergedData = { ...currentDeal, ...dealData }
+
+      if (!mergedData.yield_percentage || !mergedData.gla_sqm || !mergedData.tenant ||
+          !mergedData.lease_term_years || !mergedData.annual_rent || !mergedData.rent_currency) {
+        throw new Error('All Sale & Leaseback fields are required when service type is Sale & Leaseback')
+      }
+    }
+
+    // Set seller to tenant for Sale & Leaseback deals
+    dealData.seller = dealData.tenant || dealData.seller
+  }
+
   const { data, error } = await supabase
     .from('deals')
     .update(dealData)

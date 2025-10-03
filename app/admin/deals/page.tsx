@@ -7,13 +7,14 @@ import { fetchDeals, deleteDeal } from '../../../src/lib/supabase'
 import { Deal } from '../../../src/lib/types'
 import { formatCurrencyString } from '../../../src/lib/utils'
 import * as CBRE from '../../../src/components/cbre'
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   MagnifyingGlassIcon,
   Pencil1Icon,
   TrashIcon,
   HomeIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ChevronDownIcon
 } from '@radix-ui/react-icons'
 
 // Simple thumbnail component - no complex state management
@@ -87,7 +88,14 @@ export default function AdminDealsPage() {
         deal.seller.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (deal.remarks && deal.remarks.toLowerCase().includes(searchTerm.toLowerCase()))
+        (deal.remarks && deal.remarks.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        // Include D&SF specific fields in search
+        (deal.borrower && deal.borrower.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (deal.purpose && deal.purpose.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (deal.deal_type && deal.deal_type.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (deal.lender_source && deal.lender_source.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        // Include Sale & Leaseback specific fields in search
+        (deal.tenant && deal.tenant.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       setFilteredDeals(filtered)
     } else {
@@ -136,19 +144,39 @@ export default function AdminDealsPage() {
             {filteredDeals.length} deals total
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/deals/new">
-            <CBRE.CBREButton variant="primary" className="gap-2">
-              <PlusIcon className="w-4 h-4" />
-              Add Traditional Deal
-            </CBRE.CBREButton>
-          </Link>
-          <Link href="/admin/deals/capital-advisors/new">
-            <CBRE.CBREButton variant="outline" className="gap-2">
-              <PlusIcon className="w-4 h-4" />
-              Add Capital Advisors Project
-            </CBRE.CBREButton>
-          </Link>
+        <div>
+          <CBRE.CBREDropdownMenu
+            trigger={
+              <CBRE.CBREButton variant="primary" className="gap-2">
+                <PlusIcon className="w-4 h-4" />
+                Add New Deal
+                <ChevronDownIcon className="w-4 h-4" />
+              </CBRE.CBREButton>
+            }
+            items={[
+              {
+                type: "item",
+                label: "Property Sales Deal",
+                onClick: () => router.push('/admin/deals/new')
+              },
+              {
+                type: "item",
+                label: "Capital Advisors Project",
+                onClick: () => router.push('/admin/deals/capital-advisors/new')
+              },
+              {
+                type: "item",
+                label: "Debt & Structured Finance Deal",
+                onClick: () => router.push('/admin/deals/debt-structured-finance/new')
+              },
+              {
+                type: "item",
+                label: "Sale & Leaseback Deal",
+                onClick: () => router.push('/admin/deals/sale-leaseback/new')
+              }
+            ]}
+            align="end"
+          />
         </div>
       </div>
 
@@ -158,7 +186,7 @@ export default function AdminDealsPage() {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search deals by property, buyer, seller, country, location, or remarks..."
+              placeholder="Search deals by property, buyer/borrower/tenant, seller/lender, country, location, or remarks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
@@ -239,8 +267,19 @@ export default function AdminDealsPage() {
                         <div className="text-sm font-medium text-gray-900 truncate max-w-48" title={deal.property_name}>
                           {deal.property_name}
                         </div>
-                        <div className="text-sm text-gray-500 truncate max-w-48" title={`${deal.buyer} ← ${deal.seller}`}>
-                          {deal.buyer} ← {deal.seller}
+                        <div className="text-sm text-gray-500 truncate max-w-48" title={
+                          deal.services === 'Debt & Structured Finance'
+                            ? `${deal.borrower || 'N/A'} ← ${deal.lender_source || 'N/A'}`
+                            : deal.services === 'Sale & Leaseback'
+                            ? `${deal.buyer} ← ${deal.tenant || 'N/A'}`
+                            : `${deal.buyer} ← ${deal.seller}`
+                        }>
+                          {deal.services === 'Debt & Structured Finance'
+                            ? `${deal.borrower || 'N/A'} ← ${deal.lender_source || 'N/A'}`
+                            : deal.services === 'Sale & Leaseback'
+                            ? `${deal.buyer} ← ${deal.tenant || 'N/A'}`
+                            : `${deal.buyer} ← ${deal.seller}`
+                          }
                         </div>
                       </div>
                     </div>
@@ -250,13 +289,45 @@ export default function AdminDealsPage() {
                     <div className="text-xs text-gray-500">{deal.country}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                                              {formatCurrencyString(deal.deal_price_usd, 'USD')}
-                    </div>
-                    {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
-                      <div className="text-xs text-gray-500">
-                        {formatCurrencyString(deal.local_currency_amount, deal.local_currency)}
-                      </div>
+                    {deal.services === 'Debt & Structured Finance' ? (
+                      // Display loan size for D&SF deals
+                      <>
+                        <div className="text-sm font-medium text-gray-900">
+                          {deal.loan_size_local && deal.loan_size_currency
+                            ? `${formatCurrencyString(deal.loan_size_local, deal.loan_size_currency)}m`
+                            : 'N/A'
+                          }
+                        </div>
+                        {deal.ltv_percentage && (
+                          <div className="text-xs text-gray-500">
+                            LTV: {deal.ltv_percentage}%
+                          </div>
+                        )}
+                      </>
+                    ) : deal.services === 'Sale & Leaseback' ? (
+                      // Display yield for Sale & Leaseback deals
+                      <>
+                        <div className="text-sm font-medium text-teal-600">
+                          {deal.yield_percentage ? `${deal.yield_percentage}% Yield` : 'N/A'}
+                        </div>
+                        {deal.annual_rent && deal.rent_currency && (
+                          <div className="text-xs text-gray-500">
+                            {formatCurrencyString(deal.annual_rent, deal.rent_currency)}m/yr
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      // Display deal price for other service types
+                      <>
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatCurrencyString(deal.deal_price_usd, 'USD')}
+                        </div>
+                        {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
+                          <div className="text-xs text-gray-500">
+                            {formatCurrencyString(deal.local_currency_amount, deal.local_currency)}
+                          </div>
+                        )}
+                      </>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

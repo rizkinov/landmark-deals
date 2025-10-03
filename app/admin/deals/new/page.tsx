@@ -7,14 +7,14 @@ export default function NewDealPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Add New Deal</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Add Property Sales Deal</h1>
         <p className="mt-2 text-gray-600">
-          Create a new landmark deal entry
+          Create a new property sales transaction
         </p>
       </div>
 
-      {/* Deal Form */}
-      <DealForm />
+      {/* Deal Form with Property Sales pre-selected */}
+      <DealForm initialServiceType="Property Sales" />
     </div>
   )
 } 

@@ -10,7 +10,7 @@ export interface Deal {
   local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
   local_currency_amount?: number // in millions (or appropriate unit for currency)
   asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
-  services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales'
+  services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales' | 'Sale & Leaseback'
   deal_date: string // Q2 2024 format
   deal_date_sortable?: string
   buyer: string
@@ -25,6 +25,22 @@ export interface Deal {
   content_html?: string | null // For Capital Advisors: rich text content
   gallery_images?: string[] | null // For Capital Advisors: array of gallery image URLs
   slug?: string | null // For Capital Advisors: URL-friendly identifier
+  // Debt & Structured Finance specific fields
+  deal_type?: string | null // For D&SF: Senior Investment, Mezzanine Finance, Bridge Loan, Construction Finance
+  purpose?: string | null // For D&SF: Land Bank & Construction, Acquisition Finance, etc.
+  loan_size_local?: number | null // For D&SF: Loan amount in local currency (millions)
+  loan_size_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB' | null // For D&SF: Currency for loan size
+  ltv_percentage?: number | null // For D&SF: Loan-to-value ratio (0-100)
+  loan_term?: string | null // For D&SF: Term of the loan (e.g., "4 years")
+  borrower?: string | null // For D&SF: Entity borrowing the funds
+  lender_source?: string | null // For D&SF: Bank Lender, Non Bank Lender, Private Equity, etc.
+  // Sale & Leaseback specific fields
+  yield_percentage?: number | null // For S&L: Investment yield percentage (0-100)
+  gla_sqm?: number | null // For S&L: Gross Leasable Area in square meters
+  tenant?: string | null // For S&L: Entity leasing back the property
+  lease_term_years?: number | null // For S&L: Duration of leaseback agreement in years
+  annual_rent?: number | null // For S&L: Annual rent amount
+  rent_currency?: string | null // For S&L: Currency for rent payments
   created_at: string
   updated_at?: string
   last_edited_at?: string
@@ -80,7 +96,8 @@ export const ASSET_CLASSES: AssetClass[] = [
 export const SERVICES: Services[] = [
   'Debt & Structured Finance',
   'Capital Advisors',
-  'Property Sales'
+  'Property Sales',
+  'Sale & Leaseback'
 ]
 
 export const QUARTERS = [
@@ -121,8 +138,37 @@ export const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
 export const SERVICES_COLORS: Record<Services, string> = {
   'Debt & Structured Finance': 'bg-gray-50 text-gray-600 border-gray-200',
   'Capital Advisors': 'bg-gray-50 text-gray-600 border-gray-200',
-  'Property Sales': 'bg-gray-50 text-gray-600 border-gray-200'
+  'Property Sales': 'bg-gray-50 text-gray-600 border-gray-200',
+  'Sale & Leaseback': 'bg-teal-50 text-teal-700 border-teal-200'
 }
+
+// D&SF specific constants
+export const DEAL_TYPES = [
+  'Senior Investment',
+  'Mezzanine Finance',
+  'Bridge Loan',
+  'Construction Finance'
+] as const
+
+export const LENDER_SOURCES = [
+  'Bank Lender',
+  'Non Bank Lender',
+  'Private Equity',
+  'REIT',
+  'Government Fund'
+] as const
+
+export const FINANCING_PURPOSES = [
+  'Land Bank & Construction',
+  'Acquisition Finance',
+  'Development Finance',
+  'Refinancing',
+  'Working Capital'
+] as const
+
+export type DealType = typeof DEAL_TYPES[number]
+export type LenderSource = typeof LENDER_SOURCES[number]
+export type FinancingPurpose = typeof FINANCING_PURPOSES[number]
 
 export const PRICE_RANGES = [
   { label: 'Under $50M', min: 0, max: 50 },
@@ -165,6 +211,22 @@ export interface CreateDealData {
   project_subtitle?: string
   content_html?: string
   gallery_images?: string[]
+  // Debt & Structured Finance specific fields
+  deal_type?: DealType
+  purpose?: FinancingPurpose | string
+  loan_size_local?: number
+  loan_size_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
+  ltv_percentage?: number
+  loan_term?: string
+  borrower?: string
+  lender_source?: LenderSource
+  // Sale & Leaseback specific fields
+  yield_percentage?: number
+  gla_sqm?: number
+  tenant?: string
+  lease_term_years?: number
+  annual_rent?: number
+  rent_currency?: string
 }
 
 export interface UpdateDealData extends Partial<CreateDealData> {
@@ -179,6 +241,30 @@ export interface CapitalAdvisorsProject extends Deal {
   slug: string
   content_html?: string | null
   gallery_images?: string[] | null
+}
+
+// Debt & Structured Finance specific types
+export interface DebtStructuredFinanceDeal extends Deal {
+  services: 'Debt & Structured Finance'
+  deal_type: DealType
+  purpose: string
+  loan_size_local: number
+  loan_size_currency: string
+  ltv_percentage?: number | null
+  loan_term: string
+  borrower: string
+  lender_source: LenderSource
+}
+
+// Sale & Leaseback specific types
+export interface SaleLeasebackDeal extends Deal {
+  services: 'Sale & Leaseback'
+  yield_percentage: number
+  gla_sqm: number
+  tenant: string
+  lease_term_years: number
+  annual_rent: number
+  rent_currency: string
 }
 
 export interface CreateCapitalAdvisorsData {

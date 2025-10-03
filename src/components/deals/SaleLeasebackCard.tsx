@@ -1,41 +1,61 @@
 'use client'
 
-import { Deal, ASSET_CLASS_COLORS, SERVICES_COLORS } from '../../lib/types'
-import { formatCurrency } from '../../lib/utils'
+import { Deal, SaleLeasebackDeal, ASSET_CLASS_COLORS } from '../../lib/types'
 import * as CBRE from '../cbre'
-import { CapitalAdvisorCard } from './CapitalAdvisorCard'
-import { DebtStructuredFinanceCard } from './DebtStructuredFinanceCard'
-import { SaleLeasebackCard } from './SaleLeasebackCard'
 
-interface DealCardProps {
+interface SaleLeasebackCardProps {
   deal: Deal
   searchTerm?: string
 }
 
-export function DealCard({ deal, searchTerm }: DealCardProps) {
-  // If this is a Capital Advisors deal, render the specialized card
-  if (deal.services === 'Capital Advisors') {
-    return <CapitalAdvisorCard deal={deal} searchTerm={searchTerm} />
+export function SaleLeasebackCard({ deal, searchTerm }: SaleLeasebackCardProps) {
+  // Currency symbol mapping
+  const getCurrencySymbol = (currency: string): string => {
+    const symbols: Record<string, string> = {
+      'USD': '$',
+      'AUD': 'A$',
+      'SGD': 'S$',
+      'JPY': '¥',
+      'HKD': 'HK$',
+      'CNY': '¥',
+      'KRW': '₩',
+      'TWD': 'NT$',
+      'INR': '₹',
+      'NZD': 'NZ$',
+      'PHP': '₱',
+      'VND': '₫',
+      'THB': '฿',
+      'MVR': 'MVR '
+    }
+    return symbols[currency] || `${currency} `
   }
 
-  // If this is a Debt & Structured Finance deal, render the specialized card
-  if (deal.services === 'Debt & Structured Finance') {
-    return <DebtStructuredFinanceCard deal={deal} searchTerm={searchTerm} />
+  // Type guard to ensure we have Sale & Leaseback data
+  const isValidSaleLeasebackDeal = (deal: Deal): deal is SaleLeasebackDeal => {
+    return deal.services === 'Sale & Leaseback' &&
+           !!deal.yield_percentage &&
+           !!deal.gla_sqm &&
+           !!deal.tenant &&
+           !!deal.lease_term_years &&
+           !!deal.annual_rent &&
+           !!deal.rent_currency
   }
 
-  // If this is a Sale & Leaseback deal, render the specialized card
-  if (deal.services === 'Sale & Leaseback') {
-    return <SaleLeasebackCard deal={deal} searchTerm={searchTerm} />
+  if (!isValidSaleLeasebackDeal(deal)) {
+    // Fallback to basic display if Sale & Leaseback data is incomplete
+    return <div className="p-4 border border-red-200 rounded bg-red-50">
+      <p className="text-red-600 text-sm">Incomplete Sale & Leaseback deal data</p>
+    </div>
   }
 
   // Highlight search terms in text
   const highlightText = (text: string, searchTerm?: string) => {
     if (!searchTerm) return text
-    
+
     const regex = new RegExp(`(${searchTerm})`, 'gi')
     const parts = text.split(regex)
-    
-    return parts.map((part, index) => 
+
+    return parts.map((part, index) =>
       regex.test(part) ? (
         <mark key={index} className="bg-yellow-200 px-1 rounded">
           {part}
@@ -65,11 +85,18 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
             </div>
           </div>
         )}
-        
+
         {/* Country Badge */}
         <div className="absolute top-3 right-3">
           <CBRE.CBREBadge variant="secondary" className="bg-white/90 text-gray-800">
             {deal.country}
+          </CBRE.CBREBadge>
+        </div>
+
+        {/* Yield Badge - Prominent display */}
+        <div className="absolute top-3 left-3">
+          <CBRE.CBREBadge variant="secondary" className="bg-teal-600 text-white font-bold text-lg px-3 py-1">
+            {deal.yield_percentage}% Yield
           </CBRE.CBREBadge>
         </div>
       </div>
@@ -94,69 +121,30 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
           </div>
         </div>
 
-        {/* Deal Price */}
+        {/* Asset Class Badge */}
         <div className="mb-4">
-          {deal.is_confidential ? (
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              <span>
-                Confidential
-              </span>
-            </div>
-          ) : (
-            <>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {(() => {
-                  const currencyResult = formatCurrency(deal.deal_price_usd, 'USD', { includeBillionAnnotation: true })
-                  return (
-                    <span>
-                      {currencyResult.formatted}
-                      {currencyResult.billionAnnotation && (
-                        <span className="text-base font-normal text-gray-600 ml-1">
-                          ({currencyResult.billionAnnotation})
-                        </span>
-                      )}
-                    </span>
-                  )
-                })()}
-              </div>
-              {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
-                <div className="text-lg text-gray-600">
-                  {formatCurrency(deal.local_currency_amount, deal.local_currency).formatted}
-                </div>
-              )}
-            </>
-          )}
+          <CBRE.CBREBadge
+            variant="secondary"
+            className={`${ASSET_CLASS_COLORS[deal.asset_class]} border-0 font-medium`}
+          >
+            {deal.asset_class}
+          </CBRE.CBREBadge>
         </div>
 
-        {/* Asset Class & Services */}
-        <div className="mb-4 space-y-2">
-          {/* Asset Class - Colorful */}
-          <div className="flex">
-            <CBRE.CBREBadge 
-              variant="secondary" 
-              className={`${ASSET_CLASS_COLORS[deal.asset_class]} border-0 font-medium`}
-            >
-              {deal.asset_class}
-            </CBRE.CBREBadge>
-          </div>
-          
-          {/* Services - Monochrome */}
-          <div className="flex">
-            <CBRE.CBREBadge 
-              variant="outline" 
-              className={`${SERVICES_COLORS[deal.services]} text-xs font-normal`}
-            >
-              {deal.services}
-            </CBRE.CBREBadge>
-          </div>
-        </div>
-
-        {/* Deal Details Table */}
+        {/* Sale & Leaseback Details Table */}
         <div className="border-t pt-4">
           <div className="grid grid-cols-1 gap-2 text-sm">
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Date:</span>
               <span className="font-semibold">{deal.deal_date}</span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-gray-100">
+              <span className="text-gray-500 font-medium">Yield:</span>
+              <span className="font-semibold text-teal-600">{deal.yield_percentage}%</span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-gray-100">
+              <span className="text-gray-500 font-medium">GLA (sqm):</span>
+              <span className="font-semibold">{deal.gla_sqm.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-start py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Buyer:</span>
@@ -164,10 +152,20 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
                 {highlightText(deal.buyer, searchTerm)}
               </span>
             </div>
-            <div className="flex justify-between items-start py-1">
-              <span className="text-gray-500 font-medium">Seller:</span>
+            <div className="flex justify-between items-start py-1 border-b border-gray-100">
+              <span className="text-gray-500 font-medium">Tenant:</span>
               <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.seller, searchTerm)}
+                {highlightText(deal.tenant, searchTerm)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-gray-100">
+              <span className="text-gray-500 font-medium">Lease Term:</span>
+              <span className="font-semibold">{deal.lease_term_years} years</span>
+            </div>
+            <div className="flex justify-between items-center py-1">
+              <span className="text-gray-500 font-medium">Annual Rent:</span>
+              <span className="font-semibold">
+                {getCurrencySymbol(deal.rent_currency)}{deal.annual_rent}M
               </span>
             </div>
           </div>
@@ -193,4 +191,4 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
       </div>
     </CBRE.CBRECard>
   )
-} 
+}

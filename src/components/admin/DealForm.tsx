@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Deal, CreateDealData, COUNTRIES, ASSET_CLASSES, SERVICES, QUARTERS, COUNTRY_CURRENCIES } from '../../lib/types'
+import { Deal, CreateDealData, COUNTRIES, ASSET_CLASSES, SERVICES, QUARTERS, COUNTRY_CURRENCIES, DEAL_TYPES, LENDER_SOURCES, FINANCING_PURPOSES } from '../../lib/types'
 import { createDeal, updateDeal } from '../../lib/supabase'
 import * as CBRE from '../cbre'
 import { 
@@ -17,9 +17,10 @@ import { uploadPropertyImage } from '../../lib/storage'
 interface DealFormProps {
   deal?: Deal | null
   isEditing?: boolean
+  initialServiceType?: 'Property Sales' | 'Capital Advisors' | 'Debt & Structured Finance' | 'Sale & Leaseback'
 }
 
-export function DealForm({ deal, isEditing = false }: DealFormProps) {
+export function DealForm({ deal, isEditing = false, initialServiceType }: DealFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -32,13 +33,29 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     local_currency: 'USD',
     local_currency_amount: 0,
     asset_class: 'Office',
-    services: 'Capital Advisors',
+    services: initialServiceType || 'Capital Advisors',
     deal_date: 'Q4 2024',
     buyer: '',
     seller: '',
     location: '',
     remarks: '',
     is_confidential: false,
+    // D&SF specific fields
+    deal_type: undefined,
+    purpose: undefined,
+    loan_size_local: undefined,
+    loan_size_currency: undefined,
+    ltv_percentage: undefined,
+    loan_term: undefined,
+    borrower: undefined,
+    lender_source: undefined,
+    // Sale & Leaseback specific fields
+    yield_percentage: undefined,
+    gla_sqm: undefined,
+    tenant: undefined,
+    lease_term_years: undefined,
+    annual_rent: undefined,
+    rent_currency: undefined,
   })
 
   // Populate form if editing
@@ -59,6 +76,15 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
         location: deal.location,
         remarks: deal.remarks || '',
         is_confidential: deal.is_confidential || false,
+        // D&SF specific fields
+        deal_type: deal.deal_type as any,
+        purpose: deal.purpose,
+        loan_size_local: deal.loan_size_local,
+        loan_size_currency: deal.loan_size_currency as any,
+        ltv_percentage: deal.ltv_percentage,
+        loan_term: deal.loan_term,
+        borrower: deal.borrower,
+        lender_source: deal.lender_source as any,
       })
     }
   }, [deal, isEditing])
@@ -100,7 +126,7 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
   useEffect(() => {
     const availableCurrencies = COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']
     const suggestedCurrency = availableCurrencies[0] // First currency is the local currency
-    
+
     if (suggestedCurrency && formData.local_currency !== suggestedCurrency) {
       setFormData(prev => ({
         ...prev,
@@ -109,21 +135,125 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
     }
   }, [formData.country])
 
+  // Handle D&SF service selection - set appropriate defaults
+  useEffect(() => {
+    if (formData.services === 'Debt & Structured Finance') {
+      setFormData(prev => ({
+        ...prev,
+        buyer: prev.buyer || 'N/A',
+        seller: prev.seller || 'N/A',
+        loan_size_currency: prev.loan_size_currency || prev.local_currency
+      }))
+    }
+  }, [formData.services, formData.local_currency])
+
+  // Auto-calculate USD equivalent for loan size (for consistency with deal_price_usd)
+  useEffect(() => {
+    if (formData.services === 'Debt & Structured Finance' &&
+        formData.loan_size_local &&
+        formData.loan_size_currency) {
+
+      const exchangeRates: Record<string, number> = {
+        USD: 1,
+        SGD: 1.35,
+        AUD: 1.5,
+        JPY: 150,
+        HKD: 7.8,
+        CNY: 7.2,
+        KRW: 1300,
+        TWD: 31,
+        MVR: 15.4,
+        INR: 83,
+        NZD: 1.6,
+        PHP: 56,
+        VND: 24000,
+        THB: 36
+      }
+
+      const rate = exchangeRates[formData.loan_size_currency as keyof typeof exchangeRates] || 1
+      const usdEquivalent = Math.round(formData.loan_size_local / rate * 10) / 10
+
+      // Set deal_price_usd to loan size USD equivalent for D&SF deals
+      setFormData(prev => ({
+        ...prev,
+        deal_price_usd: usdEquivalent,
+        local_currency_amount: prev.loan_size_local || 0
+      }))
+    }
+  }, [formData.loan_size_local, formData.loan_size_currency, formData.services])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
+      // Service-specific validation
+      if (formData.services === 'Debt & Structured Finance') {
+        // D&SF specific fields validation
+        if (!formData.deal_type || !formData.purpose || !formData.loan_size_local ||
+            !formData.loan_size_currency || !formData.loan_term || !formData.borrower ||
+            !formData.lender_source) {
+          throw new Error('All Debt & Structured Finance fields are required')
+        }
+
+        if (formData.ltv_percentage && (formData.ltv_percentage < 0 || formData.ltv_percentage > 100)) {
+          throw new Error('LTV percentage must be between 0 and 100')
+        }
+
+        if (formData.loan_size_local <= 0) {
+          throw new Error('Loan size must be greater than 0')
+        }
+
+        // Set buyer/seller to N/A for D&SF deals
+        formData.buyer = 'N/A'
+        formData.seller = 'N/A'
+      } else if (formData.services === 'Sale & Leaseback') {
+        // Sale & Leaseback specific validation
+        if (!formData.yield_percentage || !formData.gla_sqm || !formData.tenant ||
+            !formData.lease_term_years || !formData.annual_rent || !formData.rent_currency) {
+          throw new Error('All Sale & Leaseback fields are required')
+        }
+
+        if (formData.yield_percentage <= 0 || formData.yield_percentage > 100) {
+          throw new Error('Yield percentage must be between 0 and 100')
+        }
+
+        if (formData.gla_sqm <= 0) {
+          throw new Error('GLA must be greater than 0')
+        }
+
+        if (formData.lease_term_years <= 0) {
+          throw new Error('Lease term must be greater than 0')
+        }
+
+        if (formData.annual_rent <= 0) {
+          throw new Error('Annual rent must be greater than 0')
+        }
+
+        // Set seller to tenant for Sale & Leaseback deals
+        formData.seller = formData.tenant
+      } else {
+        // Non-D&SF and non-S&L deals require buyer/seller and pricing
+        if (!formData.buyer || !formData.seller) {
+          throw new Error('Buyer and Seller are required for this deal type')
+        }
+
+        if (formData.deal_price_usd <= 0) {
+          throw new Error('Deal price must be greater than 0')
+        }
+      }
+
       if (isEditing && deal) {
         await updateDeal(deal.id, formData)
       } else {
         await createDeal(formData)
       }
-      
+
       router.push('/admin/deals')
     } catch (error) {
       console.error('Error saving deal:', error)
-      alert('Error saving deal. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Error saving deal: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
@@ -340,82 +470,152 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
         </div>
       </CBRE.CBRECard>
 
+      {/* Deal Details - Hide pricing fields for D&SF and Sale & Leaseback */}
+      {formData.services !== 'Debt & Structured Finance' && formData.services !== 'Sale & Leaseback' && (
+        <CBRE.CBRECard className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Deal Details
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Deal Price (USD Millions) *
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                required
+                value={formData.deal_price_usd}
+                onChange={(e) => handleInputChange('deal_price_usd', parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="0.0"
+              />
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Local Currency"
+                value={formData.local_currency}
+                onValueChange={(value) => handleInputChange('local_currency', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']).map(currency => {
+                    const isHighValueCurrency = ['JPY', 'KRW', 'TWD', 'VND'].includes(currency)
+                    const unit = isHighValueCurrency ? 'Billions' : 'Millions'
+                    return (
+                      <SelectItem key={currency} value={currency}>
+                        {currency} ({unit})
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </CBRE.CBRESelect>
+              <p className="text-xs text-gray-500 mt-1">
+                Available currencies for {formData.country}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Local Currency Amount ({formData.local_currency === 'JPY' || formData.local_currency === 'KRW' || formData.local_currency === 'TWD' ? 'Billions' : 'Millions'})
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={formData.local_currency_amount}
+                onChange={(e) => handleInputChange('local_currency_amount', parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="Auto-calculated"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <CBRE.Checkbox
+                id="is_confidential"
+                checked={formData.is_confidential || false}
+                onCheckedChange={(checked) => handleInputChange('is_confidential', checked)}
+              />
+              <label htmlFor="is_confidential" className="text-sm font-medium text-gray-700">
+                Mark pricing as confidential
+              </label>
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Asset Class *"
+                value={formData.asset_class}
+                onValueChange={(value) => handleInputChange('asset_class', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select asset class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSET_CLASSES.map(assetClass => (
+                    <SelectItem key={assetClass} value={assetClass}>
+                      {assetClass}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Services *"
+                value={formData.services}
+                onValueChange={(value) => handleInputChange('services', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select service type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SERVICES.map(service => (
+                    <SelectItem key={service} value={service}>
+                      {service}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Deal Date *"
+                value={formData.deal_date}
+                onValueChange={(value) => handleInputChange('deal_date', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select quarter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {QUARTERS.map(quarter => (
+                    <SelectItem key={quarter} value={quarter}>
+                      {quarter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
+          </div>
+        </CBRE.CBRECard>
+      )}
+
+      {/* Core Deal Information - Always visible */}
       <CBRE.CBRECard className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Deal Details
+          {(formData.services === 'Debt & Structured Finance' || formData.services === 'Sale & Leaseback') ? 'Core Deal Information' : 'Additional Details'}
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Deal Price (USD Millions) *
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              required
-              value={formData.deal_price_usd}
-              onChange={(e) => handleInputChange('deal_price_usd', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-              placeholder="0.0"
-            />
-          </div>
-
-
-
-          <div>
-            <CBRE.CBRESelect
-              label="Local Currency"
-              value={formData.local_currency}
-              onValueChange={(value) => handleInputChange('local_currency', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {(COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']).map(currency => {
-                  const isHighValueCurrency = ['JPY', 'KRW', 'TWD', 'VND'].includes(currency)
-                  const unit = isHighValueCurrency ? 'Billions' : 'Millions'
-                  return (
-                    <SelectItem key={currency} value={currency}>
-                      {currency} ({unit})
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </CBRE.CBRESelect>
-            <p className="text-xs text-gray-500 mt-1">
-              Available currencies for {formData.country}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Local Currency Amount ({formData.local_currency === 'JPY' || formData.local_currency === 'KRW' || formData.local_currency === 'TWD' ? 'Billions' : 'Millions'})
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              value={formData.local_currency_amount}
-              onChange={(e) => handleInputChange('local_currency_amount', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-              placeholder="Auto-calculated"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <CBRE.Checkbox
-              id="is_confidential"
-              checked={formData.is_confidential || false}
-              onCheckedChange={(checked) => handleInputChange('is_confidential', checked)}
-            />
-            <label htmlFor="is_confidential" className="text-sm font-medium text-gray-700">
-              Mark pricing as confidential
-            </label>
-          </div>
-
           <div>
             <CBRE.CBRESelect
               label="Asset Class *"
@@ -475,42 +675,6 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
               </SelectContent>
             </CBRE.CBRESelect>
           </div>
-        </div>
-      </CBRE.CBRECard>
-
-      <CBRE.CBRECard className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Transaction Parties & Details
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Buyer *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.buyer}
-              onChange={(e) => handleInputChange('buyer', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-              placeholder="e.g., CapitaLand"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Seller *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.seller}
-              onChange={(e) => handleInputChange('seller', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-              placeholder="e.g., Government of Singapore"
-            />
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -527,10 +691,6 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
             <p className="text-xs text-gray-500 mt-1">
               City, district, or specific area where the property is located
             </p>
-          </div>
-
-          <div className="md:col-span-1">
-            {/* Empty space to maintain grid layout */}
           </div>
 
           <div className="md:col-span-2">
@@ -550,6 +710,327 @@ export function DealForm({ deal, isEditing = false }: DealFormProps) {
           </div>
         </div>
       </CBRE.CBRECard>
+
+      {/* Transaction Parties - Only show for traditional deals */}
+      {formData.services !== 'Debt & Structured Finance' && formData.services !== 'Sale & Leaseback' && (
+        <CBRE.CBRECard className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Transaction Parties
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Buyer *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.buyer}
+                onChange={(e) => handleInputChange('buyer', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., CapitaLand"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Seller *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.seller}
+                onChange={(e) => handleInputChange('seller', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., Government of Singapore"
+              />
+            </div>
+          </div>
+        </CBRE.CBRECard>
+      )}
+
+      {/* Debt & Structured Finance Specific Fields */}
+      {formData.services === 'Debt & Structured Finance' && (
+        <CBRE.CBRECard className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Debt & Structured Finance Details
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <CBRE.CBRESelect
+                label="Deal Type *"
+                value={formData.deal_type || ''}
+                onValueChange={(value) => handleInputChange('deal_type', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select deal type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEAL_TYPES.map(dealType => (
+                    <SelectItem key={dealType} value={dealType}>
+                      {dealType}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Purpose *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.purpose || ''}
+                onChange={(e) => handleInputChange('purpose', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., Land Bank & Construction"
+                list="financing-purposes"
+              />
+              <datalist id="financing-purposes">
+                {FINANCING_PURPOSES.map(purpose => (
+                  <option key={purpose} value={purpose} />
+                ))}
+              </datalist>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Loan Size (Local Currency) *
+              </label>
+              <input
+                type="number"
+                required
+                step="0.1"
+                min="0"
+                value={formData.loan_size_local || ''}
+                onChange={(e) => handleInputChange('loan_size_local', parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 73.5"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Amount in millions (local currency)
+              </p>
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Loan Size Currency *"
+                value={formData.loan_size_currency || ''}
+                onValueChange={(value) => handleInputChange('loan_size_currency', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_CURRENCIES[formData.country]?.map(currency => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                LTV Percentage
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.ltv_percentage || ''}
+                onChange={(e) => handleInputChange('ltv_percentage', parseInt(e.target.value) || undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 70"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Loan-to-value ratio (0-100%)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Loan Term *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.loan_term || ''}
+                onChange={(e) => handleInputChange('loan_term', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 4 years"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Borrower *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.borrower || ''}
+                onChange={(e) => handleInputChange('borrower', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., Pelligra"
+              />
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Lender Source *"
+                value={formData.lender_source || ''}
+                onValueChange={(value) => handleInputChange('lender_source', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select lender source" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LENDER_SOURCES.map(lenderSource => (
+                    <SelectItem key={lenderSource} value={lenderSource}>
+                      {lenderSource}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
+          </div>
+        </CBRE.CBRECard>
+      )}
+
+      {/* Sale & Leaseback Specific Fields */}
+      {formData.services === 'Sale & Leaseback' && (
+        <CBRE.CBRECard className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Sale & Leaseback Details
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Yield Percentage *
+              </label>
+              <input
+                type="number"
+                required
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.yield_percentage || ''}
+                onChange={(e) => handleInputChange('yield_percentage', parseFloat(e.target.value) || undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 7.75"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Investment yield percentage (0-100%)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                GLA (Square Meters) *
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={formData.gla_sqm || ''}
+                onChange={(e) => handleInputChange('gla_sqm', parseInt(e.target.value) || undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 7935"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Gross Leasable Area in square meters
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tenant *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.tenant || ''}
+                onChange={(e) => handleInputChange('tenant', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., New Edge Microbials"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Entity leasing back the property
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lease Term (Years) *
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={formData.lease_term_years || ''}
+                onChange={(e) => handleInputChange('lease_term_years', parseInt(e.target.value) || undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 15"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Duration of leaseback agreement in years
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Annual Rent (Millions) *
+              </label>
+              <input
+                type="number"
+                required
+                step="0.01"
+                min="0"
+                value={formData.annual_rent || ''}
+                onChange={(e) => handleInputChange('annual_rent', parseFloat(e.target.value) || undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., 0.97"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Annual rent amount in millions
+              </p>
+            </div>
+
+            <div>
+              <CBRE.CBRESelect
+                label="Rent Currency *"
+                value={formData.rent_currency || ''}
+                onValueChange={(value) => handleInputChange('rent_currency', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_CURRENCIES[formData.country]?.map(currency => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+              <p className="text-xs text-gray-500 mt-1">
+                Currency for rent payments
+              </p>
+            </div>
+          </div>
+        </CBRE.CBRECard>
+      )}
 
       {/* Form Actions */}
       <div className="flex gap-4 justify-end">
