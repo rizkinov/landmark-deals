@@ -61,8 +61,12 @@ export function SiteAccessModal({ isOpen, onSuccess }: SiteAccessModalProps) {
       <div className="bg-white p-8 w-full max-w-md mx-4 shadow-2xl">
         {/* CBRE Branding */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-[#003F2D] mx-auto mb-4 flex items-center justify-center">
-            <span className="text-white text-2xl font-bold">CBRE</span>
+          <div className="w-32 h-16 bg-[#003F2D] mx-auto mb-4 flex items-center justify-center px-4">
+            <img
+              src="/CBRE_white.svg"
+              alt="CBRE Logo"
+              className="w-full h-auto"
+            />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Access Required
