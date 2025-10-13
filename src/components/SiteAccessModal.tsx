@@ -128,7 +128,7 @@ export function SiteAccessModal({ isOpen, onSuccess }: SiteAccessModalProps) {
           <p className="text-xs text-gray-500">
             Need access?{' '}
             <a
-              href="mailto:admin@cbre.com"
+              href="mailto:Christy.Chan@cbre.com"
               className="text-[#003F2D] hover:underline"
             >
               Contact Administrator
