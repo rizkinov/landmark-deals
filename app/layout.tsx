@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { CBREThemeProvider } from '../src/components/cbre/CBREThemeProvider'
+import { SiteAccessGuard } from '../src/components/SiteAccessGuard'
 import { financierDisplay, calibre } from './fonts'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -23,8 +24,10 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
-      >
-        {children}
+        >
+          <SiteAccessGuard>
+            {children}
+          </SiteAccessGuard>
         </CBREThemeProvider>
       </body>
     </html>

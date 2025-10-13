@@ -1,5 +1,21 @@
 // CBRE Capital Market Landmark Deals Types
 
+// Site Settings
+export interface SiteSetting {
+  id: string
+  setting_key: string
+  setting_value: string
+  updated_at: string
+  updated_by?: string | null
+  created_at: string
+}
+
+export interface SitePasswordStatus {
+  isSet: boolean
+  lastUpdated?: string
+  updatedBy?: string
+}
+
 export interface Deal {
   id: string
   property_name: string

@@ -1,20 +1,43 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import * as CBRE from '../../../src/components/cbre'
-import { 
-  DownloadIcon, 
+import {
+  DownloadIcon,
   UploadIcon,
   PersonIcon,
-  CheckCircledIcon 
+  CheckCircledIcon,
+  LockClosedIcon,
+  EyeOpenIcon,
+  EyeClosedIcon
 } from '@radix-ui/react-icons'
 import { fetchDeals, createDeal } from '../../../src/lib/supabase'
 import { exportDealsToCSV, downloadCSV, parseCSVToDeals, generateCSVTemplate } from '../../../src/lib/csv-utils'
+import { updateSitePassword, getSitePasswordStatus } from '../../../src/lib/site-access'
+import type { SitePasswordStatus } from '../../../src/lib/types'
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false)
   const [importing, setImporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Site password state
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordStatus, setPasswordStatus] = useState<SitePasswordStatus>({ isSet: false })
+  const [updatingPassword, setUpdatingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+
+  useEffect(() => {
+    loadPasswordStatus()
+  }, [])
+
+  const loadPasswordStatus = async () => {
+    const status = await getSitePasswordStatus()
+    setPasswordStatus(status)
+  }
 
   const handleExportCSV = async () => {
     setLoading(true)
@@ -91,6 +114,47 @@ export default function AdminSettingsPage() {
     downloadCSV(template, 'deals-import-template.csv')
   }
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess(false)
+
+    // Validation
+    if (newPassword.length < 4) {
+      setPasswordError('Password must be at least 4 characters long')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match')
+      return
+    }
+
+    setUpdatingPassword(true)
+
+    try {
+      const result = await updateSitePassword(newPassword)
+
+      if (result.success) {
+        setPasswordSuccess(true)
+        setNewPassword('')
+        setConfirmPassword('')
+        await loadPasswordStatus()
+
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setPasswordSuccess(false)
+        }, 3000)
+      } else {
+        setPasswordError(result.error || 'Failed to update password')
+      }
+    } catch (error) {
+      setPasswordError('An unexpected error occurred')
+    } finally {
+      setUpdatingPassword(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -103,6 +167,112 @@ export default function AdminSettingsPage() {
 
       {/* Settings Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Site Access Password */}
+        <CBRE.CBRECard className="p-6 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-4">
+            <LockClosedIcon className="w-5 h-5 text-gray-700" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              Site Access Password
+            </h3>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Control access to the entire site with a single password. Users will need to enter this password to view deals and other content. Access is granted for 24 hours after successful authentication.
+          </p>
+
+          {/* Password Status */}
+          {passwordStatus.isSet && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+              <div className="flex items-center gap-2 text-sm text-green-800">
+                <CheckCircledIcon className="w-4 h-4" />
+                <span className="font-medium">Site password is active</span>
+              </div>
+              {passwordStatus.lastUpdated && (
+                <p className="text-xs text-green-700 mt-1">
+                  Last updated: {new Date(passwordStatus.lastUpdated).toLocaleString()}
+                  {passwordStatus.updatedBy && ` by ${passwordStatus.updatedBy}`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Password Form */}
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                  placeholder="Enter new site password"
+                  minLength={4}
+                  required
+                  disabled={updatingPassword}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  disabled={updatingPassword}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeClosedIcon className="w-4 h-4" /> : <EyeOpenIcon className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
+              </label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="Confirm new password"
+                minLength={4}
+                required
+                disabled={updatingPassword}
+              />
+            </div>
+
+            {/* Error Message */}
+            {passwordError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+                {passwordError}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {passwordSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm flex items-center gap-2">
+                <CheckCircledIcon className="w-4 h-4" />
+                Site password updated successfully!
+              </div>
+            )}
+
+            <CBRE.CBREButton
+              type="submit"
+              variant="primary"
+              disabled={updatingPassword || !newPassword || !confirmPassword}
+              className="gap-2"
+            >
+              <LockClosedIcon className="w-4 h-4" />
+              {updatingPassword ? 'Updating...' : 'Update Site Password'}
+            </CBRE.CBREButton>
+          </form>
+
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-xs text-blue-800">
+              <strong>Note:</strong> Admin users are automatically granted access and do not need to enter the site password. This password only affects public access to the deals pages.
+            </p>
+          </div>
+        </CBRE.CBRECard>
+
         {/* General Settings */}
         <CBRE.CBRECard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">

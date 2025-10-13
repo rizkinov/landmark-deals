@@ -121,6 +121,15 @@ Database components have dependencies that require this exact sequence:
 - **Audit logging**: All admin actions tracked with IP/user agent
 - **Setup guide**: See `docs/admin-auth-implementation-guide.md` for complete implementation
 
+### Site Access Password Protection
+- **Two-layer security**: Site access password (public) + Admin authentication (admin panel)
+- **Site password**: Single shared password protects all public pages (`/`, `/deals`, etc.)
+- **24-hour access**: Valid token stored in localStorage after successful authentication
+- **Admin bypass**: Authenticated admins automatically bypass site password
+- **Admin configurable**: Any admin can change site password via Settings page
+- **Initial password**: 'greg' (should be changed in production)
+- **Setup guide**: See `docs/SITE-ACCESS-SETUP.md` for complete implementation
+
 ### Database Migration Pattern
 The project uses a structured migration system:
 - Scripts are numbered and must be run in order
