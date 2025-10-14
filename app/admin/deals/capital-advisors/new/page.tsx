@@ -1,10 +1,9 @@
-import { AdminGuard } from '../../../../../src/components/admin/AdminGuard'
+'use client'
+
 import { CapitalAdvisorsForm } from '../../../../../src/components/admin/CapitalAdvisorsForm'
 
 export default function NewCapitalAdvisorsProjectPage() {
   return (
-    <AdminGuard>
-      <CapitalAdvisorsForm />
-    </AdminGuard>
+    <CapitalAdvisorsForm />
   )
 }

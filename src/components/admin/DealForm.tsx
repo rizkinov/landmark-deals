@@ -25,12 +25,13 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
   const [formData, setFormData] = useState<CreateDealData>({
     property_name: '',
     property_image_url: '/default-photo.jpeg',
     country: 'Singapore',
     deal_price_usd: 0,
-    local_currency: 'USD',
+    local_currency: 'SGD', // Default to SGD for Singapore
     local_currency_amount: 0,
     asset_class: 'Office',
     services: initialServiceType || 'Capital Advisors',
@@ -135,6 +136,14 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
     }
   }, [formData.country])
 
+  // Redirect to Capital Advisors comprehensive form when selected (only for new deals)
+  useEffect(() => {
+    if (!isEditing && formData.services === 'Capital Advisors' && !redirecting && initialServiceType !== 'Capital Advisors') {
+      setRedirecting(true)
+      router.push('/admin/deals/capital-advisors/new')
+    }
+  }, [formData.services, isEditing, redirecting, router, initialServiceType])
+
   // Handle D&SF service selection - set appropriate defaults
   useEffect(() => {
     if (formData.services === 'Debt & Structured Finance') {
@@ -189,18 +198,12 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
     try {
       // Service-specific validation
       if (formData.services === 'Debt & Structured Finance') {
-        // D&SF specific fields validation
-        if (!formData.deal_type || !formData.purpose || !formData.loan_size_local ||
-            !formData.loan_size_currency || !formData.loan_term || !formData.borrower ||
-            !formData.lender_source) {
-          throw new Error('All Debt & Structured Finance fields are required')
-        }
-
+        // D&SF specific validation - all fields optional
         if (formData.ltv_percentage && (formData.ltv_percentage < 0 || formData.ltv_percentage > 100)) {
           throw new Error('LTV percentage must be between 0 and 100')
         }
 
-        if (formData.loan_size_local <= 0) {
+        if (formData.loan_size_local && formData.loan_size_local <= 0) {
           throw new Error('Loan size must be greater than 0')
         }
 
@@ -208,30 +211,33 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         formData.buyer = 'N/A'
         formData.seller = 'N/A'
       } else if (formData.services === 'Sale & Leaseback') {
-        // Sale & Leaseback specific validation
-        if (!formData.yield_percentage || !formData.gla_sqm || !formData.tenant ||
-            !formData.lease_term_years || !formData.annual_rent || !formData.rent_currency) {
-          throw new Error('All Sale & Leaseback fields are required')
-        }
-
-        if (formData.yield_percentage <= 0 || formData.yield_percentage > 100) {
+        // Sale & Leaseback specific validation - all fields optional
+        if (formData.yield_percentage && (formData.yield_percentage <= 0 || formData.yield_percentage > 100)) {
           throw new Error('Yield percentage must be between 0 and 100')
         }
 
-        if (formData.gla_sqm <= 0) {
+        if (formData.gla_sqm && formData.gla_sqm <= 0) {
           throw new Error('GLA must be greater than 0')
         }
 
-        if (formData.lease_term_years <= 0) {
+        if (formData.lease_term_years && formData.lease_term_years <= 0) {
           throw new Error('Lease term must be greater than 0')
         }
 
-        if (formData.annual_rent <= 0) {
+        if (formData.annual_rent && formData.annual_rent <= 0) {
           throw new Error('Annual rent must be greater than 0')
         }
 
-        // Set seller to tenant for Sale & Leaseback deals
-        formData.seller = formData.tenant
+        // Set buyer/seller for Sale & Leaseback deals
+        formData.buyer = formData.buyer || 'N/A'
+        formData.seller = formData.tenant || 'N/A'
+
+        // Ensure deal_price_usd is set based on annual_rent if provided
+        if (formData.annual_rent && (!formData.deal_price_usd || formData.deal_price_usd === 0)) {
+          formData.deal_price_usd = formData.annual_rent
+        } else if (!formData.deal_price_usd || formData.deal_price_usd === 0) {
+          formData.deal_price_usd = 0
+        }
       } else {
         // Non-D&SF and non-S&L deals require buyer/seller and pricing
         if (!formData.buyer || !formData.seller) {
@@ -324,9 +330,59 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
     }
   }
 
+  // Get dynamic title based on service type
+  const getPageTitle = () => {
+    switch (formData.services) {
+      case 'Capital Advisors':
+        return 'Add Capital Advisors Deal'
+      case 'Debt & Structured Finance':
+        return 'Add Debt & Structured Finance Deal'
+      case 'Sale & Leaseback':
+        return 'Add Sale & Leaseback Deal'
+      case 'Property Sales':
+      default:
+        return 'Add Property Sales Deal'
+    }
+  }
+
+  const getPageDescription = () => {
+    switch (formData.services) {
+      case 'Capital Advisors':
+        return 'Create a new capital advisors project'
+      case 'Debt & Structured Finance':
+        return 'Create a new debt & structured finance transaction'
+      case 'Sale & Leaseback':
+        return 'Create a new sale & leaseback transaction'
+      case 'Property Sales':
+      default:
+        return 'Create a new property sales transaction'
+    }
+  }
+
+  // Show loading state when redirecting to Capital Advisors form
+  if (redirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003F2D]"></div>
+        <p className="text-gray-600">Redirecting to Capital Advisors form...</p>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <CBRE.CBRECard className="p-6">
+    <div className="space-y-6">
+      {/* Dynamic Page Header */}
+      {!isEditing && (
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{getPageTitle()}</h1>
+          <p className="mt-2 text-gray-600">
+            {getPageDescription()}
+          </p>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <CBRE.CBRECard className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Property Information
         </h3>
@@ -619,117 +675,163 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         </CBRE.CBRECard>
       )}
 
-      {/* Core Deal Information - Always visible */}
-      <CBRE.CBRECard className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {(formData.services === 'Debt & Structured Finance' || formData.services === 'Sale & Leaseback') ? 'Core Deal Information' : 'Additional Details'}
-        </h3>
+      {/* Core Deal Information - Only for D&SF and Sale & Leaseback */}
+      {(formData.services === 'Debt & Structured Finance' || formData.services === 'Sale & Leaseback') && (
+        <CBRE.CBRECard className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Core Deal Information
+          </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            {formData.services === 'Debt & Structured Finance' ? (
-              <CBRE.CBRECombobox
-                label="Asset Class"
-                value={formData.asset_class}
-                onValueChange={(value) => handleInputChange('asset_class', value)}
-                options={ASSET_CLASSES}
-                placeholder="Select or type asset class..."
-              />
-            ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              {formData.services === 'Debt & Structured Finance' ? (
+                <CBRE.CBRECombobox
+                  label="Asset Class"
+                  value={formData.asset_class}
+                  onValueChange={(value) => handleInputChange('asset_class', value)}
+                  options={ASSET_CLASSES}
+                  placeholder="Select or type asset class..."
+                />
+              ) : (
+                <CBRE.CBRESelect
+                  label="Asset Class *"
+                  value={formData.asset_class}
+                  onValueChange={(value) => handleInputChange('asset_class', value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select asset class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASSET_CLASSES.map(assetClass => (
+                      <SelectItem key={assetClass} value={assetClass}>
+                        {assetClass}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </CBRE.CBRESelect>
+              )}
+            </div>
+
+            <div>
               <CBRE.CBRESelect
-                label="Asset Class *"
-                value={formData.asset_class}
-                onValueChange={(value) => handleInputChange('asset_class', value)}
+                label="Services *"
+                value={formData.services}
+                onValueChange={(value) => handleInputChange('services', value)}
                 required
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select asset class" />
+                  <SelectValue placeholder="Select service type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ASSET_CLASSES.map(assetClass => (
-                    <SelectItem key={assetClass} value={assetClass}>
-                      {assetClass}
+                  {SERVICES.map(service => (
+                    <SelectItem key={service} value={service}>
+                      {service}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </CBRE.CBRESelect>
-            )}
-          </div>
+            </div>
 
-          <div>
-            <CBRE.CBRESelect
-              label="Services *"
-              value={formData.services}
-              onValueChange={(value) => handleInputChange('services', value)}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select service type" />
-              </SelectTrigger>
-              <SelectContent>
-                {SERVICES.map(service => (
-                  <SelectItem key={service} value={service}>
-                    {service}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </CBRE.CBRESelect>
-          </div>
+            <div>
+              <CBRE.CBRESelect
+                label="Deal Date *"
+                value={formData.deal_date}
+                onValueChange={(value) => handleInputChange('deal_date', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select quarter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {QUARTERS.map(quarter => (
+                    <SelectItem key={quarter} value={quarter}>
+                      {quarter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            </div>
 
-          <div>
-            <CBRE.CBRESelect
-              label="Deal Date *"
-              value={formData.deal_date}
-              onValueChange={(value) => handleInputChange('deal_date', value)}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select quarter" />
-              </SelectTrigger>
-              <SelectContent>
-                {QUARTERS.map(quarter => (
-                  <SelectItem key={quarter} value={quarter}>
-                    {quarter}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </CBRE.CBRESelect>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., Marina Bay, Singapore"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                City, district, or specific area where the property is located
+              </p>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-              placeholder="e.g., Marina Bay, Singapore"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              City, district, or specific area where the property is located
-            </p>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Remarks
+              </label>
+              <textarea
+                value={formData.remarks || ''}
+                onChange={(e) => handleInputChange('remarks', e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent resize-none"
+                placeholder="Optional: Additional notes, strategic significance, or special circumstances..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Optional field for additional context or notes about this deal
+              </p>
+            </div>
           </div>
+        </CBRE.CBRECard>
+      )}
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Remarks
-            </label>
-            <textarea
-              value={formData.remarks || ''}
-              onChange={(e) => handleInputChange('remarks', e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent resize-none"
-              placeholder="Optional: Additional notes, strategic significance, or special circumstances..."
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Optional field for additional context or notes about this deal
-            </p>
+      {/* Additional Details - Only for Property Sales and Capital Advisors */}
+      {formData.services !== 'Debt & Structured Finance' && formData.services !== 'Sale & Leaseback' && (
+        <CBRE.CBRECard className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Additional Details
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., Marina Bay, Singapore"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                City, district, or specific area where the property is located
+              </p>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Remarks
+              </label>
+              <textarea
+                value={formData.remarks || ''}
+                onChange={(e) => handleInputChange('remarks', e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent resize-none"
+                placeholder="Optional: Additional notes, strategic significance, or special circumstances..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Optional field for additional context or notes about this deal
+              </p>
+            </div>
           </div>
-        </div>
-      </CBRE.CBRECard>
+        </CBRE.CBRECard>
+      )}
 
       {/* Transaction Parties - Only show for traditional deals */}
       {formData.services !== 'Debt & Structured Finance' && formData.services !== 'Sale & Leaseback' && (
@@ -911,6 +1013,38 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tenant (Seller / Lessee)
+              </label>
+              <input
+                type="text"
+                value={formData.tenant || ''}
+                onChange={(e) => handleInputChange('tenant', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., New Edge Microbials"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Entity selling the property and leasing it back
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Buyer (Investor)
+              </label>
+              <input
+                type="text"
+                value={formData.buyer || ''}
+                onChange={(e) => handleInputChange('buyer', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
+                placeholder="e.g., Investment Fund Name"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Entity purchasing the property
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Yield
               </label>
               <input
@@ -942,22 +1076,6 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
               />
               <p className="text-xs text-gray-500 mt-1">
                 Gross Leasable Area in square meters
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tenant
-              </label>
-              <input
-                type="text"
-                value={formData.tenant || ''}
-                onChange={(e) => handleInputChange('tenant', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-                placeholder="e.g., New Edge Microbials"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Entity leasing back the property
               </p>
             </div>
 
@@ -1021,24 +1139,25 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         </CBRE.CBRECard>
       )}
 
-      {/* Form Actions */}
-      <div className="flex gap-4 justify-end">
-        <CBRE.CBREButton
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={loading}
-        >
-          Cancel
-        </CBRE.CBREButton>
-        <CBRE.CBREButton
-          type="submit"
-          variant="primary"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : (isEditing ? 'Update Deal' : 'Create Deal')}
-        </CBRE.CBREButton>
-      </div>
-    </form>
+        {/* Form Actions */}
+        <div className="flex gap-4 justify-end">
+          <CBRE.CBREButton
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={loading}
+          >
+            Cancel
+          </CBRE.CBREButton>
+          <CBRE.CBREButton
+            type="submit"
+            variant="primary"
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : (isEditing ? 'Update Deal' : 'Create Deal')}
+          </CBRE.CBREButton>
+        </div>
+      </form>
+    </div>
   )
 } 

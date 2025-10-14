@@ -1,41 +1,68 @@
-import { notFound } from 'next/navigation'
-import { supabase } from '../../../../../../src/lib/supabase'
-import { AdminGuard } from '../../../../../../src/components/admin/AdminGuard'
-import { CapitalAdvisorsForm } from '../../../../../../src/components/admin/CapitalAdvisorsForm'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { fetchDealById } from '../../../../../../src/lib/supabase'
 import { Deal } from '../../../../../../src/lib/types'
+import { CapitalAdvisorsForm } from '../../../../../../src/components/admin/CapitalAdvisorsForm'
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons'
 
-interface PageProps {
-  params: {
-    id: string
+export default function EditCapitalAdvisorsProjectPage() {
+  const params = useParams()
+  const dealId = params.id as string
+  const [deal, setDeal] = useState<Deal | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadDeal() {
+      try {
+        if (dealId) {
+          const dealData = await fetchDealById(dealId)
+          if (dealData && dealData.services === 'Capital Advisors') {
+            setDeal(dealData)
+          } else {
+            setError('Capital Advisors project not found')
+          }
+        }
+      } catch (err) {
+        console.error('Error loading project:', err)
+        setError('Error loading project')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadDeal()
+  }, [dealId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003F2D]"></div>
+      </div>
+    )
   }
-}
-
-async function getCapitalAdvisorsProject(id: string): Promise<Deal | null> {
-  const { data: deal, error } = await supabase
-    .from('deals')
-    .select('*')
-    .eq('id', id)
-    .eq('services', 'Capital Advisors')
-    .single()
 
   if (error || !deal) {
-    return null
+    return (
+      <div className="text-center py-12">
+        <ExclamationTriangleIcon className="w-16 h-16 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          {error || 'Project not found'}
+        </h3>
+        <p className="text-gray-500 mb-4">
+          The Capital Advisors project you're looking for could not be loaded.
+        </p>
+        <a
+          href="/admin/deals"
+          className="text-[#003F2D] hover:text-[#002A1F] font-medium"
+        >
+          ← Back to Deals
+        </a>
+      </div>
+    )
   }
 
-  return deal
-}
-
-export default async function EditCapitalAdvisorsProjectPage({ params }: PageProps) {
-  const resolvedParams = await params
-  const deal = await getCapitalAdvisorsProject(resolvedParams.id)
-
-  if (!deal) {
-    notFound()
-  }
-
-  return (
-    <AdminGuard>
-      <CapitalAdvisorsForm deal={deal} isEditing={true} />
-    </AdminGuard>
-  )
+  return <CapitalAdvisorsForm deal={deal} isEditing={true} />
 }

@@ -160,26 +160,64 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
 }
 
 export async function createDeal(dealData: CreateDealData): Promise<Deal> {
-  // Validate service-specific fields
+  // Clean up service-specific fields based on service type
   if (dealData.services === 'Debt & Structured Finance') {
-    if (!dealData.deal_type || !dealData.purpose || !dealData.loan_size_local ||
-        !dealData.loan_size_currency || !dealData.loan_term || !dealData.borrower ||
-        !dealData.lender_source) {
-      throw new Error('All Debt & Structured Finance fields are required when service type is D&SF')
-    }
+    // D&SF fields are all optional
+    // Set buyer/seller to N/A for D&SF deals
+    dealData.buyer = 'N/A'
+    dealData.seller = 'N/A'
 
-    // Set buyer/seller to N/A for D&SF deals if not provided
-    dealData.buyer = dealData.buyer || 'N/A'
-    dealData.seller = dealData.seller || 'N/A'
+    // Remove Sale & Leaseback specific fields
+    delete dealData.yield_percentage
+    delete dealData.gla_sqm
+    delete dealData.tenant
+    delete dealData.lease_term_years
+    delete dealData.annual_rent
+    delete dealData.rent_currency
   } else if (dealData.services === 'Sale & Leaseback') {
-    if (!dealData.yield_percentage || !dealData.gla_sqm || !dealData.tenant ||
-        !dealData.lease_term_years || !dealData.annual_rent || !dealData.rent_currency) {
-      throw new Error('All Sale & Leaseback fields are required when service type is Sale & Leaseback')
+    // Sale & Leaseback fields are all optional
+    // Set buyer/seller for Sale & Leaseback deals
+    dealData.buyer = dealData.buyer || 'N/A'
+    dealData.seller = dealData.tenant || 'N/A'
+
+    // Ensure deal_price_usd is set based on annual_rent if provided
+    if (dealData.annual_rent && (!dealData.deal_price_usd || dealData.deal_price_usd === 0)) {
+      dealData.deal_price_usd = dealData.annual_rent
+    } else if (!dealData.deal_price_usd || dealData.deal_price_usd === 0) {
+      dealData.deal_price_usd = 0
     }
 
-    // Set seller to tenant for Sale & Leaseback deals
-    dealData.seller = dealData.tenant
+    // Remove D&SF specific fields
+    delete dealData.deal_type
+    delete dealData.purpose
+    delete dealData.loan_size_local
+    delete dealData.loan_size_currency
+    delete dealData.ltv_percentage
+    delete dealData.loan_term
+    delete dealData.borrower
+    delete dealData.lender_source
+  } else {
+    // Property Sales or Capital Advisors
+    // Remove D&SF specific fields
+    delete dealData.deal_type
+    delete dealData.purpose
+    delete dealData.loan_size_local
+    delete dealData.loan_size_currency
+    delete dealData.ltv_percentage
+    delete dealData.loan_term
+    delete dealData.borrower
+    delete dealData.lender_source
+
+    // Remove Sale & Leaseback specific fields
+    delete dealData.yield_percentage
+    delete dealData.gla_sqm
+    delete dealData.tenant
+    delete dealData.lease_term_years
+    delete dealData.annual_rent
+    delete dealData.rent_currency
   }
+
+  console.log('Creating deal with data:', JSON.stringify(dealData, null, 2))
 
   const { data, error } = await supabase
     .from('deals')
@@ -188,8 +226,8 @@ export async function createDeal(dealData: CreateDealData): Promise<Deal> {
     .single()
 
   if (error) {
-    console.error('Error creating deal:', error)
-    throw error
+    console.error('Supabase error details:', JSON.stringify(error, null, 2))
+    throw new Error(`Database error: ${error.message || 'Unknown error'} (${error.code || 'NO_CODE'})`)
   }
 
   return data
