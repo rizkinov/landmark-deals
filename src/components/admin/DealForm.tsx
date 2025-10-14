@@ -547,23 +547,33 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
             </div>
 
             <div>
-              <CBRE.CBRESelect
-                label="Asset Class *"
-                value={formData.asset_class}
-                onValueChange={(value) => handleInputChange('asset_class', value)}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select asset class" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ASSET_CLASSES.map(assetClass => (
-                    <SelectItem key={assetClass} value={assetClass}>
-                      {assetClass}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </CBRE.CBRESelect>
+              {formData.services === 'Debt & Structured Finance' ? (
+                <CBRE.CBRECombobox
+                  label="Asset Class"
+                  value={formData.asset_class}
+                  onValueChange={(value) => handleInputChange('asset_class', value)}
+                  options={ASSET_CLASSES}
+                  placeholder="Select or type asset class..."
+                />
+              ) : (
+                <CBRE.CBRESelect
+                  label="Asset Class *"
+                  value={formData.asset_class}
+                  onValueChange={(value) => handleInputChange('asset_class', value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select asset class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASSET_CLASSES.map(assetClass => (
+                      <SelectItem key={assetClass} value={assetClass}>
+                        {assetClass}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </CBRE.CBRESelect>
+              )}
             </div>
 
             <div>
@@ -617,23 +627,33 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <CBRE.CBRESelect
-              label="Asset Class *"
-              value={formData.asset_class}
-              onValueChange={(value) => handleInputChange('asset_class', value)}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select asset class" />
-              </SelectTrigger>
-              <SelectContent>
-                {ASSET_CLASSES.map(assetClass => (
-                  <SelectItem key={assetClass} value={assetClass}>
-                    {assetClass}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </CBRE.CBRESelect>
+            {formData.services === 'Debt & Structured Finance' ? (
+              <CBRE.CBRECombobox
+                label="Asset Class"
+                value={formData.asset_class}
+                onValueChange={(value) => handleInputChange('asset_class', value)}
+                options={ASSET_CLASSES}
+                placeholder="Select or type asset class..."
+              />
+            ) : (
+              <CBRE.CBRESelect
+                label="Asset Class *"
+                value={formData.asset_class}
+                onValueChange={(value) => handleInputChange('asset_class', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select asset class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSET_CLASSES.map(assetClass => (
+                    <SelectItem key={assetClass} value={assetClass}>
+                      {assetClass}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </CBRE.CBRESelect>
+            )}
           </div>
 
           <div>
@@ -760,10 +780,9 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <CBRE.CBRESelect
-                label="Deal Type *"
+                label="Deal Type"
                 value={formData.deal_type || ''}
                 onValueChange={(value) => handleInputChange('deal_type', value)}
-                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select deal type" />
@@ -779,32 +798,21 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Purpose *
-              </label>
-              <input
-                type="text"
-                required
+              <CBRE.CBRECombobox
+                label="Purpose"
                 value={formData.purpose || ''}
-                onChange={(e) => handleInputChange('purpose', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-                placeholder="e.g., Land Bank & Construction"
-                list="financing-purposes"
+                onValueChange={(value) => handleInputChange('purpose', value)}
+                options={FINANCING_PURPOSES}
+                placeholder="Select or type purpose..."
               />
-              <datalist id="financing-purposes">
-                {FINANCING_PURPOSES.map(purpose => (
-                  <option key={purpose} value={purpose} />
-                ))}
-              </datalist>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Loan Size (Local Currency) *
+                Loan Size (Local Currency)
               </label>
               <input
                 type="number"
-                required
                 step="0.1"
                 min="0"
                 value={formData.loan_size_local || ''}
@@ -819,10 +827,9 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <CBRE.CBRESelect
-                label="Loan Size Currency *"
+                label="Loan Size Currency"
                 value={formData.loan_size_currency || ''}
                 onValueChange={(value) => handleInputChange('loan_size_currency', value)}
-                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select currency" />
@@ -857,11 +864,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Loan Term *
+                Loan Term
               </label>
               <input
                 type="text"
-                required
                 value={formData.loan_term || ''}
                 onChange={(e) => handleInputChange('loan_term', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
@@ -871,11 +877,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Borrower *
+                Borrower
               </label>
               <input
                 type="text"
-                required
                 value={formData.borrower || ''}
                 onChange={(e) => handleInputChange('borrower', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
@@ -884,23 +889,13 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
             </div>
 
             <div>
-              <CBRE.CBRESelect
-                label="Lender Source *"
+              <CBRE.CBRECombobox
+                label="Lender Source"
                 value={formData.lender_source || ''}
                 onValueChange={(value) => handleInputChange('lender_source', value)}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select lender source" />
-                </SelectTrigger>
-                <SelectContent>
-                  {LENDER_SOURCES.map(lenderSource => (
-                    <SelectItem key={lenderSource} value={lenderSource}>
-                      {lenderSource}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </CBRE.CBRESelect>
+                options={LENDER_SOURCES}
+                placeholder="Select or type lender source..."
+              />
             </div>
           </div>
         </CBRE.CBRECard>
@@ -916,11 +911,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Yield Percentage *
+                Yield
               </label>
               <input
                 type="number"
-                required
                 step="0.01"
                 min="0"
                 max="100"
@@ -936,11 +930,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                GLA (Square Meters) *
+                GLA (Square Meters)
               </label>
               <input
                 type="number"
-                required
                 min="1"
                 value={formData.gla_sqm || ''}
                 onChange={(e) => handleInputChange('gla_sqm', parseInt(e.target.value) || undefined)}
@@ -954,11 +947,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tenant *
+                Tenant
               </label>
               <input
                 type="text"
-                required
                 value={formData.tenant || ''}
                 onChange={(e) => handleInputChange('tenant', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
@@ -971,11 +963,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lease Term (Years) *
+                Leaseback Period (Years)
               </label>
               <input
                 type="number"
-                required
                 min="1"
                 value={formData.lease_term_years || ''}
                 onChange={(e) => handleInputChange('lease_term_years', parseInt(e.target.value) || undefined)}
@@ -989,11 +980,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Annual Rent (Millions) *
+                Deal Price (Millions)
               </label>
               <input
                 type="number"
-                required
                 step="0.01"
                 min="0"
                 value={formData.annual_rent || ''}
@@ -1002,16 +992,15 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
                 placeholder="e.g., 0.97"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Annual rent amount in millions
+                Deal price amount in millions
               </p>
             </div>
 
             <div>
               <CBRE.CBRESelect
-                label="Rent Currency *"
+                label="Deal Price Currency"
                 value={formData.rent_currency || ''}
                 onValueChange={(value) => handleInputChange('rent_currency', value)}
-                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select currency" />
@@ -1025,7 +1014,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
                 </SelectContent>
               </CBRE.CBRESelect>
               <p className="text-xs text-gray-500 mt-1">
-                Currency for rent payments
+                Currency for deal price
               </p>
             </div>
           </div>

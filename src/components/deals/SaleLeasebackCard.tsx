@@ -159,11 +159,11 @@ export function SaleLeasebackCard({ deal, searchTerm }: SaleLeasebackCardProps) 
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Lease Term:</span>
+              <span className="text-gray-500 font-medium">Leaseback Period:</span>
               <span className="font-semibold">{deal.lease_term_years} years</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-medium">Annual Rent:</span>
+              <span className="text-gray-500 font-medium">Deal Price:</span>
               <span className="font-semibold">
                 {getCurrencySymbol(deal.rent_currency)}{deal.annual_rent}M
               </span>

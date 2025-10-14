@@ -312,7 +312,7 @@ export default function AdminDealsPage() {
                         </div>
                         {deal.annual_rent && deal.rent_currency && (
                           <div className="text-xs text-gray-500">
-                            {formatCurrencyString(deal.annual_rent, deal.rent_currency)}m/yr
+                            {formatCurrencyString(deal.annual_rent, deal.rent_currency)}m
                           </div>
                         )}
                       </>

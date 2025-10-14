@@ -79,15 +79,21 @@ This project currently has no test suite configured. Tests would need to be set 
 
 #### Core Table: `deals`
 ```sql
-id, property_name, country, deal_price_usd, local_currency, 
-local_currency_amount, asset_class, services, deal_date, 
+id, property_name, country, deal_price_usd, local_currency,
+local_currency_amount, asset_class, services, deal_date,
 buyer, seller, location, is_confidential, created_at, updated_at
+
+# Service-specific fields:
+# - D&SF: deal_type, purpose, loan_size_local, loan_size_currency, ltv_percentage, loan_term, borrower, lender_source
+# - Capital Advisors: project_title, project_subtitle, content_html, gallery_images, slug
+# - Sale & Leaseback: yield_percentage, gla_sqm, tenant, lease_term_years, annual_rent, rent_currency
 ```
 
 #### Key Features
 - 13 supported Asia Pacific countries
 - 7 asset classes (Office, Retail, Industrial, etc.)
-- 3 service types (Property Sales, Capital Advisors, Debt & Structured Finance)
+- 4 service types (Property Sales, Capital Advisors, Debt & Structured Finance, Sale & Leaseback)
+- Multi-currency support with country-specific currencies (14 currencies across Asia Pacific)
 - Confidential pricing support
 - Full-text search capabilities
 - Audit tracking for admin edits
@@ -95,6 +101,8 @@ buyer, seller, location, is_confidential, created_at, updated_at
 ### Type System (`src/lib/types.ts`)
 - Comprehensive TypeScript interfaces for all data structures
 - Strict union types for countries, asset classes, and services
+- Service-specific type guards (CapitalAdvisorsProject, DebtStructuredFinanceDeal, SaleLeasebackDeal)
+- Country-to-currency mapping (COUNTRY_CURRENCIES) for multi-currency support
 - Filter state management types
 - Database response types with pagination
 
@@ -129,6 +137,7 @@ Database components have dependencies that require this exact sequence:
 - **Admin configurable**: Any admin can change site password via Settings page
 - **Initial password**: 'greg' (should be changed in production)
 - **Setup guide**: See `docs/SITE-ACCESS-SETUP.md` for complete implementation
+- **Development note**: When testing site password, use incognito/private browsing or clear localStorage to reset authentication state
 
 ### Database Migration Pattern
 The project uses a structured migration system:

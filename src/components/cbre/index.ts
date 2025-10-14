@@ -10,6 +10,7 @@ export * from './CBREButton';
 export * from './CBRECard';
 export * from './CBREChart';
 export * from './CBRECheckbox';
+export * from './CBRECombobox';
 export * from './CBREDataTable';
 export * from './CBREDatePicker';
 export * from './CBREDropdownMenu';

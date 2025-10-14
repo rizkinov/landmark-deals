@@ -51,12 +51,12 @@ export interface Deal {
   borrower?: string | null // For D&SF: Entity borrowing the funds
   lender_source?: string | null // For D&SF: Bank Lender, Non Bank Lender, Private Equity, etc.
   // Sale & Leaseback specific fields
-  yield_percentage?: number | null // For S&L: Investment yield percentage (0-100)
+  yield_percentage?: number | null // For S&L: Yield (Investment yield percentage 0-100)
   gla_sqm?: number | null // For S&L: Gross Leasable Area in square meters
   tenant?: string | null // For S&L: Entity leasing back the property
-  lease_term_years?: number | null // For S&L: Duration of leaseback agreement in years
-  annual_rent?: number | null // For S&L: Annual rent amount
-  rent_currency?: string | null // For S&L: Currency for rent payments
+  lease_term_years?: number | null // For S&L: Leaseback Period (Duration of leaseback agreement in years)
+  annual_rent?: number | null // For S&L: Deal Price (in millions)
+  rent_currency?: string | null // For S&L: Currency for deal price
   created_at: string
   updated_at?: string
   last_edited_at?: string
