@@ -12,39 +12,35 @@ export function SaleLeasebackCard({ deal, searchTerm }: SaleLeasebackCardProps) 
   // Currency symbol mapping
   const getCurrencySymbol = (currency: string): string => {
     const symbols: Record<string, string> = {
-      'USD': '$',
       'AUD': 'A$',
-      'SGD': 'S$',
-      'JPY': '¥',
-      'HKD': 'HK$',
       'CNY': '¥',
-      'KRW': '₩',
-      'TWD': 'NT$',
+      'HKD': 'HK$',
       'INR': '₹',
+      'JPY': '¥',
+      'KRW': '₩',
+      'MVR': 'MVR ',
+      'MYR': 'RM',
       'NZD': 'NZ$',
       'PHP': '₱',
-      'VND': '₫',
+      'SGD': 'S$',
       'THB': '฿',
-      'MVR': 'MVR '
+      'TWD': 'NT$',
+      'USD': '$',
+      'VND': '₫'
     }
     return symbols[currency] || `${currency} `
   }
 
-  // Type guard to ensure we have Sale & Leaseback data
-  const isValidSaleLeasebackDeal = (deal: Deal): deal is SaleLeasebackDeal => {
-    return deal.services === 'Sale & Leaseback' &&
-           !!deal.yield_percentage &&
-           !!deal.gla_sqm &&
-           !!deal.tenant &&
-           !!deal.lease_term_years &&
-           !!deal.annual_rent &&
-           !!deal.rent_currency
+  // Type guard - just check it's a Sale & Leaseback service type
+  // All fields are now optional
+  const isSaleLeasebackDeal = (deal: Deal): boolean => {
+    return deal.services === 'Sale & Leaseback'
   }
 
-  if (!isValidSaleLeasebackDeal(deal)) {
-    // Fallback to basic display if Sale & Leaseback data is incomplete
+  if (!isSaleLeasebackDeal(deal)) {
+    // This shouldn't happen, but just in case
     return <div className="p-4 border border-red-200 rounded bg-red-50">
-      <p className="text-red-600 text-sm">Incomplete Sale & Leaseback deal data</p>
+      <p className="text-red-600 text-sm">Invalid service type for Sale & Leaseback card</p>
     </div>
   }
 
@@ -93,12 +89,14 @@ export function SaleLeasebackCard({ deal, searchTerm }: SaleLeasebackCardProps) 
           </CBRE.CBREBadge>
         </div>
 
-        {/* Yield Badge - Prominent display */}
-        <div className="absolute top-3 left-3">
-          <CBRE.CBREBadge variant="secondary" className="bg-teal-600 text-white font-bold text-lg px-3 py-1">
-            {deal.yield_percentage}% Yield
-          </CBRE.CBREBadge>
-        </div>
+        {/* Yield Badge - Prominent display (only if provided) */}
+        {deal.yield_percentage && (
+          <div className="absolute top-3 left-3">
+            <CBRE.CBREBadge variant="secondary" className="bg-teal-600 text-white font-bold text-lg px-3 py-1">
+              {deal.yield_percentage}% Yield
+            </CBRE.CBREBadge>
+          </div>
+        )}
       </div>
 
       {/* Card Content */}
@@ -136,36 +134,44 @@ export function SaleLeasebackCard({ deal, searchTerm }: SaleLeasebackCardProps) 
           <div className="grid grid-cols-1 gap-2 text-sm">
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Date:</span>
-              <span className="font-semibold">{deal.deal_date}</span>
+              <span className="font-semibold">{deal.deal_date || '-'}</span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Yield:</span>
-              <span className="font-semibold text-teal-600">{deal.yield_percentage}%</span>
+              <span className="font-semibold text-teal-600">
+                {deal.yield_percentage ? `${deal.yield_percentage}%` : '-'}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">GLA (sqm):</span>
-              <span className="font-semibold">{deal.gla_sqm.toLocaleString()}</span>
+              <span className="font-semibold">
+                {deal.gla_sqm ? deal.gla_sqm.toLocaleString() : '-'}
+              </span>
             </div>
             <div className="flex justify-between items-start py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Buyer:</span>
               <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.buyer, searchTerm)}
+                {deal.buyer ? highlightText(deal.buyer, searchTerm) : '-'}
               </span>
             </div>
             <div className="flex justify-between items-start py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Tenant:</span>
               <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.tenant, searchTerm)}
+                {deal.tenant ? highlightText(deal.tenant, searchTerm) : '-'}
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Leaseback Period:</span>
-              <span className="font-semibold">{deal.lease_term_years} years</span>
+              <span className="font-semibold">
+                {deal.lease_term_years ? `${deal.lease_term_years} years` : '-'}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1">
               <span className="text-gray-500 font-medium">Deal Price:</span>
               <span className="font-semibold">
-                {getCurrencySymbol(deal.rent_currency)}{deal.annual_rent}M
+                {deal.annual_rent && deal.rent_currency
+                  ? `${getCurrencySymbol(deal.rent_currency)}${deal.annual_rent}M`
+                  : '-'}
               </span>
             </div>
           </div>

@@ -1,5 +1,8 @@
 // CBRE Capital Market Landmark Deals Types
 
+// Price display mode types
+export type PriceDisplayMode = 'exact' | 'over' | 'approx' | 'confidential'
+
 // Site Settings
 export interface SiteSetting {
   id: string
@@ -21,9 +24,9 @@ export interface Deal {
   property_name: string
   property_image_url?: string | null
   property_images?: string[]
-  country: 'Japan' | 'Korea' | 'Taiwan' | 'Hong Kong' | 'China' | 'Singapore' | 'Maldives' | 'Australia' | 'India' | 'New Zealand' | 'Philippines' | 'Vietnam' | 'Thailand'
+  country: 'Australia' | 'China' | 'Hong Kong' | 'India' | 'Japan' | 'Korea' | 'Malaysia' | 'Maldives' | 'New Zealand' | 'Philippines' | 'Singapore' | 'Taiwan' | 'Thailand' | 'Vietnam'
   deal_price_usd: number // in millions
-  local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
+  local_currency?: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND'
   local_currency_amount?: number // in millions (or appropriate unit for currency)
   asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
   services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales' | 'Sale & Leaseback'
@@ -34,7 +37,9 @@ export interface Deal {
   location: string // Required: city/town (e.g., "Marina Bay, Singapore")
   remarks?: string | null // Optional: additional notes
   location_remarks?: string | null // Optional: location-specific notes
-  is_confidential?: boolean // Optional: whether pricing is confidential
+  is_confidential?: boolean // Optional: whether pricing is confidential (computed from price_display_mode)
+  price_display_mode?: PriceDisplayMode // Optional: how to display price (exact, over, approx, confidential)
+  show_usd?: boolean // Optional: whether to show USD amount (false shows "USD: -")
   // Capital Advisors specific fields
   project_title?: string | null // For Capital Advisors: main project title
   project_subtitle?: string | null // For Capital Advisors: project subtitle
@@ -45,7 +50,7 @@ export interface Deal {
   deal_type?: string | null // For D&SF: Senior Investment, Mezzanine Finance, Bridge Loan, Construction Finance
   purpose?: string | null // For D&SF: Land Bank & Construction, Acquisition Finance, etc.
   loan_size_local?: number | null // For D&SF: Loan amount in local currency (millions)
-  loan_size_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB' | null // For D&SF: Currency for loan size
+  loan_size_currency?: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND' | null // For D&SF: Currency for loan size
   ltv_percentage?: number | null // For D&SF: Loan-to-value ratio (0-100)
   loan_term?: string | null // For D&SF: Term of the loan (e.g., "4 years")
   borrower?: string | null // For D&SF: Entity borrowing the funds
@@ -96,7 +101,7 @@ export type AssetClass = Deal['asset_class']
 export type Services = Deal['services']
 
 export const COUNTRIES: Country[] = [
-  'Japan', 'Korea', 'Taiwan', 'Hong Kong', 'China', 'Singapore', 'Maldives', 'Australia', 'India', 'New Zealand', 'Philippines', 'Vietnam', 'Thailand'
+  'Australia', 'China', 'Hong Kong', 'India', 'Japan', 'Korea', 'Malaysia', 'Maldives', 'New Zealand', 'Philippines', 'Singapore', 'Taiwan', 'Thailand', 'Vietnam'
 ]
 
 export const ASSET_CLASSES: AssetClass[] = [
@@ -126,19 +131,20 @@ export const QUARTERS = [
 ]
 
 export const COUNTRY_FLAGS: Record<Country, string> = {
+  'Australia': '🇦🇺',
+  'China': '🇨🇳',
+  'Hong Kong': '🇭🇰',
+  'India': '🇮🇳',
   'Japan': '🇯🇵',
   'Korea': '🇰🇷',
-  'Taiwan': '🇹🇼',
-  'Hong Kong': '🇭🇰',
-  'China': '🇨🇳',
-  'Singapore': '🇸🇬',
+  'Malaysia': '🇲🇾',
   'Maldives': '🇲🇻',
-  'Australia': '🇦🇺',
-  'India': '🇮🇳',
   'New Zealand': '🇳🇿',
   'Philippines': '🇵🇭',
-  'Vietnam': '🇻🇳',
-  'Thailand': '🇹🇭'
+  'Singapore': '🇸🇬',
+  'Taiwan': '🇹🇼',
+  'Thailand': '🇹🇭',
+  'Vietnam': '🇻🇳'
 }
 
 export const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
@@ -212,7 +218,7 @@ export interface CreateDealData {
   property_image_url?: string
   country: Country
   deal_price_usd: number
-  local_currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
+  local_currency: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND'
   local_currency_amount: number
   asset_class: AssetClass
   services: Services
@@ -222,6 +228,8 @@ export interface CreateDealData {
   location: string
   remarks?: string
   is_confidential?: boolean
+  price_display_mode?: PriceDisplayMode
+  show_usd?: boolean
   // Capital Advisors specific fields
   project_title?: string
   project_subtitle?: string
@@ -294,7 +302,7 @@ export interface CreateCapitalAdvisorsData {
   location: string
   // Optional traditional deal fields for Capital Advisors
   deal_price_usd?: number
-  local_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
+  local_currency?: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND'
   local_currency_amount?: number
   asset_class?: AssetClass
   buyer?: string
@@ -306,16 +314,17 @@ export interface CreateCapitalAdvisorsData {
 // Country to available currencies mapping
 export const COUNTRY_CURRENCIES: Record<Country, string[]> = {
   'Australia': ['AUD', 'USD'],
-  'Japan': ['JPY', 'USD'],
-  'Singapore': ['SGD', 'USD'],
-  'Hong Kong': ['HKD', 'USD'],
   'China': ['CNY', 'USD'],
-  'Korea': ['KRW', 'USD'],
-  'Taiwan': ['TWD', 'USD'],
-  'Maldives': ['MVR', 'USD'],
+  'Hong Kong': ['HKD', 'USD'],
   'India': ['INR', 'USD'],
+  'Japan': ['JPY', 'USD'],
+  'Korea': ['KRW', 'USD'],
+  'Malaysia': ['MYR', 'USD'],
+  'Maldives': ['MVR', 'USD'],
   'New Zealand': ['NZD', 'USD'],
   'Philippines': ['PHP', 'USD'],
-  'Vietnam': ['VND', 'USD'],
-  'Thailand': ['THB', 'USD']
+  'Singapore': ['SGD', 'USD'],
+  'Taiwan': ['TWD', 'USD'],
+  'Thailand': ['THB', 'USD'],
+  'Vietnam': ['VND', 'USD']
 } 

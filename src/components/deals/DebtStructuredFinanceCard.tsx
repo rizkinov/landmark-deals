@@ -12,20 +12,21 @@ export function DebtStructuredFinanceCard({ deal, searchTerm }: DebtStructuredFi
   // Currency symbol mapping
   const getCurrencySymbol = (currency: string): string => {
     const symbols: Record<string, string> = {
-      'USD': '$',
       'AUD': 'A$',
-      'SGD': 'S$',
-      'JPY': '¥',
-      'HKD': 'HK$',
       'CNY': '¥',
-      'KRW': '₩',
-      'TWD': 'NT$',
+      'HKD': 'HK$',
       'INR': '₹',
+      'JPY': '¥',
+      'KRW': '₩',
+      'MVR': 'MVR ',
+      'MYR': 'RM',
       'NZD': 'NZ$',
       'PHP': '₱',
-      'VND': '₫',
+      'SGD': 'S$',
       'THB': '฿',
-      'MVR': 'MVR '
+      'TWD': 'NT$',
+      'USD': '$',
+      'VND': '₫'
     }
     return symbols[currency] || `${currency} `
   }

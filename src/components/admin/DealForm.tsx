@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Deal, CreateDealData, COUNTRIES, ASSET_CLASSES, SERVICES, QUARTERS, COUNTRY_CURRENCIES, DEAL_TYPES, LENDER_SOURCES, FINANCING_PURPOSES } from '../../lib/types'
+import { Deal, CreateDealData, COUNTRIES, ASSET_CLASSES, SERVICES, QUARTERS, COUNTRY_CURRENCIES, DEAL_TYPES, LENDER_SOURCES, FINANCING_PURPOSES, PriceDisplayMode } from '../../lib/types'
 import { createDeal, updateDeal } from '../../lib/supabase'
+import { roundUsdFromLocal, EXCHANGE_RATES } from '../../lib/utils'
 import * as CBRE from '../cbre'
 import { 
   SelectContent, 
@@ -41,6 +42,8 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
     location: '',
     remarks: '',
     is_confidential: false,
+    price_display_mode: 'exact',
+    show_usd: true,
     // D&SF specific fields
     deal_type: undefined,
     purpose: undefined,
@@ -77,6 +80,8 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         location: deal.location,
         remarks: deal.remarks || '',
         is_confidential: deal.is_confidential || false,
+        price_display_mode: deal.price_display_mode || 'exact',
+        show_usd: deal.show_usd !== undefined ? deal.show_usd : true,
         // D&SF specific fields
         deal_type: deal.deal_type as any,
         purpose: deal.purpose,
@@ -93,24 +98,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
   // Auto-calculate local currency amount based on USD and selected currency (simplified)
   useEffect(() => {
     if (formData.deal_price_usd > 0 && formData.local_currency !== 'USD') {
-      // Simple exchange rate estimation - admin will adjust manually
-      const exchangeRates: Record<string, number> = {
-        SGD: 1.35,
-        AUD: 1.5,
-        JPY: 150,
-        HKD: 7.8,
-        CNY: 7.2,
-        KRW: 1300,
-        TWD: 31,
-        MVR: 15.4,
-        INR: 83,
-        NZD: 1.6,
-        PHP: 56,
-        VND: 24000,
-        THB: 36
-      }
-
-      const rate = exchangeRates[formData.local_currency as keyof typeof exchangeRates] || 1
+      const rate = EXCHANGE_RATES[formData.local_currency] || 1
       setFormData(prev => ({
         ...prev,
         local_currency_amount: Math.round(prev.deal_price_usd * rate * 10) / 10
@@ -122,6 +110,22 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
       }))
     }
   }, [formData.deal_price_usd, formData.local_currency])
+
+  // Auto-round USD when price_display_mode is 'over' or 'approx' and local currency changes
+  useEffect(() => {
+    if ((formData.price_display_mode === 'over' || formData.price_display_mode === 'approx') &&
+        formData.local_currency_amount &&
+        formData.local_currency) {
+      const roundedUsd = roundUsdFromLocal(formData.local_currency_amount, formData.local_currency)
+      // Only update if different to avoid infinite loops
+      if (roundedUsd !== formData.deal_price_usd) {
+        setFormData(prev => ({
+          ...prev,
+          deal_price_usd: roundedUsd
+        }))
+      }
+    }
+  }, [formData.price_display_mode, formData.local_currency_amount, formData.local_currency])
 
   // Auto-set default local currency based on country
   useEffect(() => {
@@ -163,20 +167,21 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         formData.loan_size_currency) {
 
       const exchangeRates: Record<string, number> = {
-        USD: 1,
-        SGD: 1.35,
         AUD: 1.5,
-        JPY: 150,
-        HKD: 7.8,
         CNY: 7.2,
-        KRW: 1300,
-        TWD: 31,
-        MVR: 15.4,
+        HKD: 7.8,
         INR: 83,
+        JPY: 150,
+        KRW: 1300,
+        MVR: 15.4,
+        MYR: 4.7,
         NZD: 1.6,
         PHP: 56,
-        VND: 24000,
-        THB: 36
+        SGD: 1.35,
+        THB: 36,
+        TWD: 31,
+        USD: 1,
+        VND: 24000
       }
 
       const rate = exchangeRates[formData.loan_size_currency as keyof typeof exchangeRates] || 1
@@ -591,16 +596,80 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
               />
             </div>
 
-            <div className="flex items-center space-x-2">
-              <CBRE.Checkbox
-                id="is_confidential"
-                checked={formData.is_confidential || false}
-                onCheckedChange={(checked) => handleInputChange('is_confidential', checked)}
-              />
-              <label htmlFor="is_confidential" className="text-sm font-medium text-gray-700">
-                Mark pricing as confidential
-              </label>
-            </div>
+            {/* Price Display Mode - Only for Property Sales */}
+            {formData.services === 'Property Sales' && (
+              <div className="md:col-span-2 space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Price Display Mode
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {(['exact', 'over', 'approx', 'confidential'] as PriceDisplayMode[]).map((mode) => (
+                      <label
+                        key={mode}
+                        className={`flex items-center justify-center px-4 py-3 border-2 rounded cursor-pointer transition-all ${
+                          formData.price_display_mode === mode
+                            ? 'border-[#003F2D] bg-[#003F2D] text-white'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="price_display_mode"
+                          value={mode}
+                          checked={formData.price_display_mode === mode}
+                          onChange={(e) => {
+                            const newMode = e.target.value as PriceDisplayMode
+                            handleInputChange('price_display_mode', newMode)
+                            // Sync is_confidential
+                            handleInputChange('is_confidential', newMode === 'confidential')
+                          }}
+                          className="sr-only"
+                        />
+                        <span className="text-sm font-medium capitalize">{mode}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {formData.price_display_mode === 'exact' && 'Display exact pricing without modifiers'}
+                    {formData.price_display_mode === 'over' && 'Prefix prices with "Over" (e.g., "Over $100M")'}
+                    {formData.price_display_mode === 'approx' && 'Add "~" suffix to prices (e.g., "$100M~")'}
+                    {formData.price_display_mode === 'confidential' && 'Hide all pricing information'}
+                  </p>
+                </div>
+
+                {/* Show USD as N/A checkbox - only visible for Over and Approx modes */}
+                {(formData.price_display_mode === 'over' || formData.price_display_mode === 'approx') && (
+                  <div className="flex items-center space-x-2 pt-2 border-t border-gray-200">
+                    <CBRE.Checkbox
+                      id="show_usd"
+                      checked={formData.show_usd !== false}
+                      onCheckedChange={(checked) => handleInputChange('show_usd', checked)}
+                    />
+                    <label htmlFor="show_usd" className="text-sm font-medium text-gray-700">
+                      Show USD amount (uncheck to display as "USD: -")
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Keep old checkbox for non-Property Sales services */}
+            {formData.services !== 'Property Sales' && (
+              <div className="flex items-center space-x-2">
+                <CBRE.Checkbox
+                  id="is_confidential"
+                  checked={formData.is_confidential || false}
+                  onCheckedChange={(checked) => {
+                    handleInputChange('is_confidential', checked)
+                    handleInputChange('price_display_mode', checked ? 'confidential' : 'exact')
+                  }}
+                />
+                <label htmlFor="is_confidential" className="text-sm font-medium text-gray-700">
+                  Mark pricing as confidential
+                </label>
+              </div>
+            )}
 
             <div>
               {formData.services === 'Debt & Structured Finance' ? (

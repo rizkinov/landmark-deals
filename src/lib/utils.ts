@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 // Currency formatting utility - uses symbols only (no redundant currency codes)
 export function formatCurrency(
   amount: number,
-  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB',
+  currency: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND',
   options: {
     showDecimals?: boolean
     unit?: 'M' | 'B' | '' // M for millions, B for billions
@@ -19,20 +19,21 @@ export function formatCurrency(
 
   // Currency symbol mapping
   const currencySymbols = {
-    USD: '$',
-    SGD: 'S$',
     AUD: 'A$',
-    JPY: '¥',
-    HKD: 'HK$',
     CNY: 'CN¥', // Chinese Yuan - distinguished from Japanese Yen
-    KRW: '₩',
-    TWD: 'NT$',
-    MVR: 'Rf',
+    HKD: 'HK$',
     INR: '₹',
+    JPY: '¥',
+    KRW: '₩',
+    MVR: 'Rf',
+    MYR: 'RM',
     NZD: 'NZ$',
     PHP: '₱',
-    VND: '₫',
-    THB: '฿'
+    SGD: 'S$',
+    THB: '฿',
+    TWD: 'NT$',
+    USD: '$',
+    VND: '₫'
   }
 
   // Determine appropriate decimal places and unit
@@ -73,7 +74,7 @@ export function formatCurrency(
       formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
     }
   } else {
-    // Other currencies (USD, SGD, AUD, HKD, CNY, MVR, NZD, THB) use decimals
+    // Other currencies (USD, SGD, AUD, HKD, CNY, MVR, MYR, NZD, THB) use decimals
     formattedAmount = showDecimals ? amount.toFixed(1) : amount.toFixed(0)
   }
 
@@ -93,7 +94,7 @@ export function formatCurrency(
 // Backward compatible helper that returns string only
 export function formatCurrencyString(
   amount: number,
-  currency: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB',
+  currency: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND',
   options: {
     showDecimals?: boolean
     unit?: 'M' | 'B' | ''
@@ -139,17 +140,91 @@ export function slugify(text: string): string {
 export function quarterToDate(quarterStr: string): string | null {
   const match = quarterStr.match(/^Q([1-4])\s+(\d{4})$/)
   if (!match) return null
-  
+
   const quarter = parseInt(match[1])
   const year = parseInt(match[2])
-  
+
   // Map quarters to months (start of quarter)
   const quarterToMonth = {
     1: '01', // Q1 starts in January
-    2: '04', // Q2 starts in April  
+    2: '04', // Q2 starts in April
     3: '07', // Q3 starts in July
     4: '10'  // Q4 starts in October
   }
-  
+
   return `${year}-${quarterToMonth[quarter as keyof typeof quarterToMonth]}-01`
+}
+
+// Exchange rates for currency conversion (same as DealForm)
+export const EXCHANGE_RATES: Record<string, number> = {
+  AUD: 1.5,
+  CNY: 7.2,
+  HKD: 7.8,
+  INR: 83,
+  JPY: 150,
+  KRW: 1300,
+  MVR: 15.4,
+  MYR: 4.7,
+  NZD: 1.6,
+  PHP: 56,
+  SGD: 1.35,
+  THB: 36,
+  TWD: 31,
+  USD: 1,
+  VND: 24000
+}
+
+// Round USD to whole millions based on local currency conversion
+export function roundUsdFromLocal(
+  localAmount: number,
+  localCurrency: string
+): number {
+  if (localCurrency === 'USD') {
+    return Math.round(localAmount)
+  }
+
+  const rate = EXCHANGE_RATES[localCurrency] || 1
+  const usdAmount = localAmount / rate
+  return Math.round(usdAmount) // Round to whole millions
+}
+
+// Format price with display mode (Over/Approx/Confidential)
+export function formatPriceWithMode(
+  amount: number,
+  currency: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND',
+  displayMode?: 'exact' | 'over' | 'approx' | 'confidential',
+  options: {
+    showDecimals?: boolean
+    unit?: 'M' | 'B' | ''
+    includeBillionAnnotation?: boolean
+  } = {}
+): { formatted: string; billionAnnotation?: string } {
+  // Handle confidential mode
+  if (displayMode === 'confidential') {
+    return { formatted: 'Confidential' }
+  }
+
+  // Get base formatting
+  const { formatted, billionAnnotation } = formatCurrency(amount, currency, options)
+
+  // Add prefix/suffix based on mode
+  if (displayMode === 'over') {
+    return {
+      formatted: `Over ${formatted}`,
+      billionAnnotation
+    }
+  } else if (displayMode === 'approx') {
+    return {
+      formatted: `${formatted}~`,
+      billionAnnotation: billionAnnotation ? `${billionAnnotation}~` : undefined
+    }
+  }
+
+  // Default: exact mode
+  return { formatted, billionAnnotation }
+}
+
+// Get display text for USD when hidden
+export function getUsdDisplayText(showUsd: boolean): string {
+  return showUsd ? '' : 'USD: -'
 }
