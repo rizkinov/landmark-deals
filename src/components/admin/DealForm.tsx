@@ -57,7 +57,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
     yield_percentage: undefined,
     gla_sqm: undefined,
     tenant: undefined,
-    lease_term_years: undefined,
+    lease_term_months: undefined,
     annual_rent: undefined,
     rent_currency: undefined,
   })
@@ -91,6 +91,13 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         loan_term: deal.loan_term,
         borrower: deal.borrower,
         lender_source: deal.lender_source as any,
+        // Sale & Leaseback specific fields
+        yield_percentage: deal.yield_percentage,
+        gla_sqm: deal.gla_sqm,
+        tenant: deal.tenant,
+        lease_term_months: deal.lease_term_months,
+        annual_rent: deal.annual_rent,
+        rent_currency: deal.rent_currency as any,
       })
     }
   }, [deal, isEditing])
@@ -212,7 +219,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
           throw new Error('GLA must be greater than 0')
         }
 
-        if (formData.lease_term_years && formData.lease_term_years <= 0) {
+        if (formData.lease_term_months && formData.lease_term_months <= 0) {
           throw new Error('Lease term must be greater than 0')
         }
 
@@ -641,8 +648,8 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
               </div>
             )}
 
-            {/* Keep old checkbox for non-Property Sales services */}
-            {formData.services !== 'Property Sales' && (
+            {/* Keep old checkbox for Debt & Structured Finance and Capital Advisors */}
+            {formData.services !== 'Property Sales' && formData.services !== 'Sale & Leaseback' && (
               <div className="flex items-center space-x-2">
                 <CBRE.Checkbox
                   id="is_confidential"
@@ -1137,18 +1144,18 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Leaseback Period (Years)
+                Leaseback Period (Months)
               </label>
               <input
                 type="number"
                 min="1"
-                value={formData.lease_term_years || ''}
-                onChange={(e) => handleInputChange('lease_term_years', parseInt(e.target.value) || undefined)}
+                value={formData.lease_term_months || ''}
+                onChange={(e) => handleInputChange('lease_term_months', parseInt(e.target.value) || undefined)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#003F2D] focus:border-transparent"
-                placeholder="e.g., 15"
+                placeholder="e.g., 180"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Duration of leaseback agreement in years
+                Duration of leaseback agreement in months
               </p>
             </div>
 
@@ -1190,6 +1197,62 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
               <p className="text-xs text-gray-500 mt-1">
                 Currency for deal price
               </p>
+            </div>
+
+            {/* Price Display Mode for Sale & Leaseback */}
+            <div className="md:col-span-2 space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Price Display Mode
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {(['exact', 'over', 'approx', 'confidential'] as PriceDisplayMode[]).map((mode) => (
+                    <label
+                      key={mode}
+                      className={`flex items-center justify-center px-4 py-3 border-2 rounded cursor-pointer transition-all ${
+                        formData.price_display_mode === mode
+                          ? 'border-[#003F2D] bg-[#003F2D] text-white'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="price_display_mode"
+                        value={mode}
+                        checked={formData.price_display_mode === mode}
+                        onChange={(e) => {
+                          const newMode = e.target.value as PriceDisplayMode
+                          handleInputChange('price_display_mode', newMode)
+                          // Sync is_confidential
+                          handleInputChange('is_confidential', newMode === 'confidential')
+                        }}
+                        className="sr-only"
+                      />
+                      <span className="text-sm font-medium capitalize">{mode}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.price_display_mode === 'exact' && 'Display exact pricing without modifiers'}
+                  {formData.price_display_mode === 'over' && 'Prefix prices with "Over" (e.g., "Over $100M")'}
+                  {formData.price_display_mode === 'approx' && 'Add "~" suffix to prices (e.g., "$100M~")'}
+                  {formData.price_display_mode === 'confidential' && 'Hide all pricing information'}
+                </p>
+              </div>
+
+              {/* Show USD as N/A checkbox - only visible for Over and Approx modes */}
+              {(formData.price_display_mode === 'over' || formData.price_display_mode === 'approx') && (
+                <div className="flex items-center space-x-2 pt-2 border-t border-gray-200">
+                  <CBRE.Checkbox
+                    id="show_usd_slb"
+                    checked={formData.show_usd !== false}
+                    onCheckedChange={(checked) => handleInputChange('show_usd', checked)}
+                  />
+                  <label htmlFor="show_usd_slb" className="text-sm font-medium text-gray-700">
+                    Show USD amount (uncheck to display as "USD: -")
+                  </label>
+                </div>
+              )}
             </div>
           </div>
         </CBRE.CBRECard>

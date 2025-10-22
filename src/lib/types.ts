@@ -59,7 +59,7 @@ export interface Deal {
   yield_percentage?: number | null // For S&L: Yield (Investment yield percentage 0-100)
   gla_sqm?: number | null // For S&L: Gross Leasable Area in square meters
   tenant?: string | null // For S&L: Entity leasing back the property
-  lease_term_years?: number | null // For S&L: Leaseback Period (Duration of leaseback agreement in years)
+  lease_term_months?: number | null // For S&L: Leaseback Period (Duration of leaseback agreement in months)
   annual_rent?: number | null // For S&L: Deal Price (in millions)
   rent_currency?: string | null // For S&L: Currency for deal price
   created_at: string
@@ -248,7 +248,7 @@ export interface CreateDealData {
   yield_percentage?: number
   gla_sqm?: number
   tenant?: string
-  lease_term_years?: number
+  lease_term_months?: number
   annual_rent?: number
   rent_currency?: string
 }
@@ -286,7 +286,7 @@ export interface SaleLeasebackDeal extends Deal {
   yield_percentage: number
   gla_sqm: number
   tenant: string
-  lease_term_years: number
+  lease_term_months: number
   annual_rent: number
   rent_currency: string
 }

@@ -163,7 +163,7 @@ export function SaleLeasebackCard({ deal, searchTerm }: SaleLeasebackCardProps) 
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Leaseback Period:</span>
               <span className="font-semibold">
-                {deal.lease_term_years ? `${deal.lease_term_years} years` : '-'}
+                {deal.lease_term_months ? `${deal.lease_term_months} months` : '-'}
               </span>
             </div>
             <div className="flex justify-between items-center py-1">
