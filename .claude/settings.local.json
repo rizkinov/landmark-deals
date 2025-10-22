@@ -17,7 +17,8 @@
       "Bash(git commit:*)",
       "Bash(psql:*)",
       "Bash(npm run lint)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
