@@ -1,6 +1,6 @@
 {
   "name": "landmark-deals",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CBRE Capital Market Landmark Deals - Real estate transaction discovery platform for Asia Pacific",
   "private": true,
   "type": "module",
