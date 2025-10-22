@@ -27,54 +27,17 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [redirecting, setRedirecting] = useState(false)
-  const [formData, setFormData] = useState<CreateDealData>({
-    property_name: '',
-    property_image_url: '/default-photo.jpeg',
-    country: 'Singapore',
-    deal_price_usd: 0,
-    local_currency: 'SGD', // Default to SGD for Singapore
-    local_currency_amount: 0,
-    asset_class: 'Office',
-    services: initialServiceType || 'Capital Advisors',
-    deal_date: 'Q4 2024',
-    buyer: '',
-    seller: '',
-    location: '',
-    remarks: '',
-    is_confidential: false,
-    price_display_mode: 'exact',
-    show_usd: true,
-    // D&SF specific fields
-    deal_type: undefined,
-    purpose: undefined,
-    loan_size_local: undefined,
-    loan_size_currency: undefined,
-    ltv_percentage: undefined,
-    loan_term: undefined,
-    borrower: undefined,
-    lender_source: undefined,
-    // Sale & Leaseback specific fields
-    yield_percentage: undefined,
-    gla_sqm: undefined,
-    tenant: undefined,
-    lease_term_months: undefined,
-    annual_rent: undefined,
-    rent_currency: undefined,
-  })
-
-  // Populate form if editing
-  useEffect(() => {
+  const [isInitialLoad, setIsInitialLoad] = useState(isEditing)
+  // Initialize formData from deal prop if editing, otherwise use defaults
+  const getInitialFormData = (): CreateDealData => {
     if (deal && isEditing) {
-      console.log('[DealForm Debug] Raw deal data:', deal)
-      console.log('[DealForm Debug] deal.services:', deal.services, 'Type:', typeof deal.services)
-
-      const newFormData = {
+      return {
         property_name: deal.property_name,
         property_image_url: deal.property_image_url || '',
         country: deal.country,
         deal_price_usd: deal.deal_price_usd,
-        local_currency: deal.local_currency,
-        local_currency_amount: deal.local_currency_amount,
+        local_currency: deal.local_currency || 'USD',
+        local_currency_amount: deal.local_currency_amount || 0,
         asset_class: deal.asset_class,
         services: deal.services,
         deal_date: deal.deal_date,
@@ -85,7 +48,6 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         is_confidential: deal.is_confidential || false,
         price_display_mode: deal.price_display_mode || 'exact',
         show_usd: deal.show_usd !== undefined ? deal.show_usd : true,
-        // D&SF specific fields
         deal_type: deal.deal_type as any,
         purpose: deal.purpose,
         loan_size_local: deal.loan_size_local,
@@ -94,7 +56,6 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         loan_term: deal.loan_term,
         borrower: deal.borrower,
         lender_source: deal.lender_source as any,
-        // Sale & Leaseback specific fields
         yield_percentage: deal.yield_percentage,
         gla_sqm: deal.gla_sqm,
         tenant: deal.tenant,
@@ -102,40 +63,84 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         annual_rent: deal.annual_rent,
         rent_currency: deal.rent_currency as any,
       }
-
-      console.log('[DealForm Debug] Setting formData with services:', newFormData.services)
-      setFormData(newFormData)
     }
-  }, [deal, isEditing])
+
+    return {
+      property_name: '',
+      property_image_url: '/default-photo.jpeg',
+      country: 'Singapore',
+      deal_price_usd: 0,
+      local_currency: 'SGD', // Default to SGD for Singapore
+      local_currency_amount: 0,
+      asset_class: 'Office',
+      services: initialServiceType || 'Capital Advisors',
+      deal_date: 'Q4 2024',
+      buyer: '',
+      seller: '',
+      location: '',
+      remarks: '',
+      is_confidential: false,
+      price_display_mode: 'exact',
+      show_usd: true,
+      // D&SF specific fields
+      deal_type: undefined,
+      purpose: undefined,
+      loan_size_local: undefined,
+      loan_size_currency: undefined,
+      ltv_percentage: undefined,
+      loan_term: undefined,
+      borrower: undefined,
+      lender_source: undefined,
+      // Sale & Leaseback specific fields
+      yield_percentage: undefined,
+      gla_sqm: undefined,
+      tenant: undefined,
+      lease_term_months: undefined,
+      annual_rent: undefined,
+      rent_currency: undefined,
+    }
+  }
+
+  const [formData, setFormData] = useState<CreateDealData>(getInitialFormData())
+
+  // Mark initial load as complete after mount for edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setTimeout(() => setIsInitialLoad(false), 100)
+    }
+  }, [])
 
   // Auto-calculate local currency amount based on USD and selected currency (simplified)
   useEffect(() => {
-    console.log('[DealForm Debug] Auto-calc useEffect - formData.services BEFORE:', formData.services)
+    // Skip auto-calculation during initial data load in edit mode
+    if (isInitialLoad) return
+    // Skip auto-calculation entirely in edit mode - preserve existing values
+    if (isEditing) return
+
     if (formData.deal_price_usd > 0 && formData.local_currency !== 'USD') {
       const rate = EXCHANGE_RATES[formData.local_currency] || 1
-      setFormData(prev => {
-        console.log('[DealForm Debug] Auto-calc updating - prev.services:', prev.services)
-        return {
-          ...prev,
-          local_currency_amount: Math.round(prev.deal_price_usd * rate * 10) / 10
-        }
-      })
+      setFormData(prev => ({
+        ...prev,
+        local_currency_amount: Math.round(prev.deal_price_usd * rate * 10) / 10
+      }))
     } else if (formData.local_currency === 'USD') {
-      setFormData(prev => {
-        console.log('[DealForm Debug] Auto-calc USD - prev.services:', prev.services)
-        return {
-          ...prev,
-          local_currency_amount: prev.deal_price_usd
-        }
-      })
+      setFormData(prev => ({
+        ...prev,
+        local_currency_amount: prev.deal_price_usd
+      }))
     }
-  }, [formData.deal_price_usd, formData.local_currency])
+  }, [formData.deal_price_usd, formData.local_currency, isInitialLoad, isEditing])
 
   // Removed auto-rounding USD for 'over' and 'approx' modes
   // Users can now independently set both USD and local currency amounts
 
   // Auto-set default local currency based on country
   useEffect(() => {
+    // Skip during initial data load in edit mode
+    if (isInitialLoad) return
+    // Skip auto-currency switching entirely in edit mode - preserve user's choice
+    if (isEditing) return
+
     const availableCurrencies = COUNTRY_CURRENCIES[formData.country as keyof typeof COUNTRY_CURRENCIES] || ['USD']
     const suggestedCurrency = availableCurrencies[0] // First currency is the local currency
 
@@ -145,7 +150,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         local_currency: suggestedCurrency as any
       }))
     }
-  }, [formData.country])
+  }, [formData.country, isInitialLoad, isEditing])
 
   // Redirect to Capital Advisors comprehensive form when selected (only for new deals)
   useEffect(() => {
@@ -157,6 +162,9 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
   // Handle D&SF service selection - set appropriate defaults
   useEffect(() => {
+    // Skip during initial data load in edit mode
+    if (isInitialLoad) return
+
     if (formData.services === 'Debt & Structured Finance') {
       setFormData(prev => ({
         ...prev,
@@ -165,10 +173,13 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         loan_size_currency: prev.loan_size_currency || prev.local_currency
       }))
     }
-  }, [formData.services, formData.local_currency])
+  }, [formData.services, formData.local_currency, isInitialLoad])
 
   // Auto-calculate USD equivalent for loan size (for consistency with deal_price_usd)
   useEffect(() => {
+    // Skip during initial data load in edit mode
+    if (isInitialLoad) return
+
     if (formData.services === 'Debt & Structured Finance' &&
         formData.loan_size_local &&
         formData.loan_size_currency) {
@@ -201,7 +212,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         local_currency_amount: prev.loan_size_local || 0
       }))
     }
-  }, [formData.loan_size_local, formData.loan_size_currency, formData.services])
+  }, [formData.loan_size_local, formData.loan_size_currency, formData.services, isInitialLoad])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
