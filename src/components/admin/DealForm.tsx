@@ -65,13 +65,6 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
   // Populate form if editing
   useEffect(() => {
     if (deal && isEditing) {
-      console.log('[DealForm Debug] Loading deal:', {
-        id: deal.id,
-        services: deal.services,
-        servicesType: typeof deal.services,
-        price_display_mode: deal.price_display_mode,
-        show_usd: deal.show_usd
-      })
       setFormData({
         property_name: deal.property_name,
         property_image_url: deal.property_image_url || '',
@@ -598,7 +591,6 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
             </div>
 
             {/* Price Display Mode - Only for Property Sales */}
-            {console.log('[DealForm Debug] Rendering - formData.services:', formData.services, 'Should show Price Display Mode?', formData.services === 'Property Sales')}
             {formData.services === 'Property Sales' && (
               <div className="md:col-span-2 space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50">
                 <div>
