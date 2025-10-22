@@ -1,7 +1,7 @@
 'use client'
 
 import { Deal, ASSET_CLASS_COLORS, SERVICES_COLORS } from '../../lib/types'
-import { formatCurrency } from '../../lib/utils'
+import { formatCurrency, formatPriceWithMode } from '../../lib/utils'
 import * as CBRE from '../cbre'
 import { CapitalAdvisorCard } from './CapitalAdvisorCard'
 import { DebtStructuredFinanceCard } from './DebtStructuredFinanceCard'
@@ -96,7 +96,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
 
         {/* Deal Price */}
         <div className="mb-4">
-          {deal.is_confidential ? (
+          {deal.price_display_mode === 'confidential' || deal.is_confidential ? (
             <div className="text-2xl font-bold text-gray-900 mb-1">
               <span>
                 Confidential
@@ -104,24 +104,40 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
             </div>
           ) : (
             <>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {(() => {
-                  const currencyResult = formatCurrency(deal.deal_price_usd, 'USD', { includeBillionAnnotation: true })
-                  return (
-                    <span>
-                      {currencyResult.formatted}
-                      {currencyResult.billionAnnotation && (
-                        <span className="text-base font-normal text-gray-600 ml-1">
-                          ({currencyResult.billionAnnotation})
-                        </span>
-                      )}
-                    </span>
-                  )
-                })()}
-              </div>
+              {/* USD Display */}
+              {deal.show_usd !== false ? (
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  {(() => {
+                    const currencyResult = formatPriceWithMode(
+                      deal.deal_price_usd,
+                      'USD',
+                      deal.price_display_mode || 'exact',
+                      { includeBillionAnnotation: true }
+                    )
+                    return (
+                      <span>
+                        {currencyResult.formatted}
+                        {currencyResult.billionAnnotation && (
+                          <span className="text-base font-normal text-gray-600 ml-1">
+                            ({currencyResult.billionAnnotation})
+                          </span>
+                        )}
+                      </span>
+                    )
+                  })()}
+                </div>
+              ) : (
+                <div className="text-2xl font-bold text-gray-900 mb-1">USD: -</div>
+              )}
+
+              {/* Local Currency Display */}
               {deal.local_currency && deal.local_currency !== 'USD' && deal.local_currency_amount && (
                 <div className="text-lg text-gray-600">
-                  {formatCurrency(deal.local_currency_amount, deal.local_currency).formatted}
+                  {formatPriceWithMode(
+                    deal.local_currency_amount,
+                    deal.local_currency,
+                    deal.price_display_mode || 'exact'
+                  ).formatted}
                 </div>
               )}
             </>
