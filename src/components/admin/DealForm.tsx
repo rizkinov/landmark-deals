@@ -65,7 +65,10 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
   // Populate form if editing
   useEffect(() => {
     if (deal && isEditing) {
-      setFormData({
+      console.log('[DealForm Debug] Raw deal data:', deal)
+      console.log('[DealForm Debug] deal.services:', deal.services, 'Type:', typeof deal.services)
+
+      const newFormData = {
         property_name: deal.property_name,
         property_image_url: deal.property_image_url || '',
         country: deal.country,
@@ -98,23 +101,33 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         lease_term_months: deal.lease_term_months,
         annual_rent: deal.annual_rent,
         rent_currency: deal.rent_currency as any,
-      })
+      }
+
+      console.log('[DealForm Debug] Setting formData with services:', newFormData.services)
+      setFormData(newFormData)
     }
   }, [deal, isEditing])
 
   // Auto-calculate local currency amount based on USD and selected currency (simplified)
   useEffect(() => {
+    console.log('[DealForm Debug] Auto-calc useEffect - formData.services BEFORE:', formData.services)
     if (formData.deal_price_usd > 0 && formData.local_currency !== 'USD') {
       const rate = EXCHANGE_RATES[formData.local_currency] || 1
-      setFormData(prev => ({
-        ...prev,
-        local_currency_amount: Math.round(prev.deal_price_usd * rate * 10) / 10
-      }))
+      setFormData(prev => {
+        console.log('[DealForm Debug] Auto-calc updating - prev.services:', prev.services)
+        return {
+          ...prev,
+          local_currency_amount: Math.round(prev.deal_price_usd * rate * 10) / 10
+        }
+      })
     } else if (formData.local_currency === 'USD') {
-      setFormData(prev => ({
-        ...prev,
-        local_currency_amount: prev.deal_price_usd
-      }))
+      setFormData(prev => {
+        console.log('[DealForm Debug] Auto-calc USD - prev.services:', prev.services)
+        return {
+          ...prev,
+          local_currency_amount: prev.deal_price_usd
+        }
+      })
     }
   }, [formData.deal_price_usd, formData.local_currency])
 
