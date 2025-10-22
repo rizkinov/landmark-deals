@@ -75,7 +75,7 @@ export default function EditDealPage() {
       </div>
 
       {/* Deal Form */}
-      <DealForm deal={deal} isEditing={true} />
+      <DealForm key={deal.id} deal={deal} isEditing={true} />
     </div>
   )
 } 
