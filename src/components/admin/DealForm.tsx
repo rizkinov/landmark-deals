@@ -111,21 +111,8 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
     }
   }, [formData.deal_price_usd, formData.local_currency])
 
-  // Auto-round USD when price_display_mode is 'over' or 'approx' and local currency changes
-  useEffect(() => {
-    if ((formData.price_display_mode === 'over' || formData.price_display_mode === 'approx') &&
-        formData.local_currency_amount &&
-        formData.local_currency) {
-      const roundedUsd = roundUsdFromLocal(formData.local_currency_amount, formData.local_currency)
-      // Only update if different to avoid infinite loops
-      if (roundedUsd !== formData.deal_price_usd) {
-        setFormData(prev => ({
-          ...prev,
-          deal_price_usd: roundedUsd
-        }))
-      }
-    }
-  }, [formData.price_display_mode, formData.local_currency_amount, formData.local_currency])
+  // Removed auto-rounding USD for 'over' and 'approx' modes
+  // Users can now independently set both USD and local currency amounts
 
   // Auto-set default local currency based on country
   useEffect(() => {
