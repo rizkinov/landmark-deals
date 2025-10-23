@@ -175,6 +175,7 @@ export const DEAL_TYPES = [
 export const LENDER_SOURCES = [
   'Bank Lender',
   'Non Bank Lender',
+  'International Bank',
   'Private Equity',
   'REIT',
   'Government Fund'
