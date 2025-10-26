@@ -215,8 +215,8 @@ export function formatPriceWithMode(
     }
   } else if (displayMode === 'approx') {
     return {
-      formatted: `${formatted}~`,
-      billionAnnotation: billionAnnotation ? `${billionAnnotation}~` : undefined
+      formatted: `Approx. ${formatted}`,
+      billionAnnotation
     }
   }
 

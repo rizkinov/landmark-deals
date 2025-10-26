@@ -651,7 +651,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
                   <p className="text-xs text-gray-500 mt-2">
                     {formData.price_display_mode === 'exact' && 'Display exact pricing without modifiers'}
                     {formData.price_display_mode === 'over' && 'Prefix prices with "Over" (e.g., "Over $100M")'}
-                    {formData.price_display_mode === 'approx' && 'Add "~" suffix to prices (e.g., "$100M~")'}
+                    {formData.price_display_mode === 'approx' && 'Add "Approx." prefix to prices (e.g., "Approx. $100M")'}
                     {formData.price_display_mode === 'confidential' && 'Hide all pricing information'}
                   </p>
                 </div>
@@ -1259,7 +1259,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
                 <p className="text-xs text-gray-500 mt-2">
                   {formData.price_display_mode === 'exact' && 'Display exact pricing without modifiers'}
                   {formData.price_display_mode === 'over' && 'Prefix prices with "Over" (e.g., "Over $100M")'}
-                  {formData.price_display_mode === 'approx' && 'Add "~" suffix to prices (e.g., "$100M~")'}
+                  {formData.price_display_mode === 'approx' && 'Add "Approx." prefix to prices (e.g., "Approx. $100M")'}
                   {formData.price_display_mode === 'confidential' && 'Hide all pricing information'}
                 </p>
               </div>
