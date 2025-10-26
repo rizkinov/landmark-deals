@@ -968,22 +968,13 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <CBRE.CBRESelect
+              <CBRE.CBRECombobox
                 label="Deal Type"
                 value={formData.deal_type || ''}
                 onValueChange={(value) => handleInputChange('deal_type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select deal type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEAL_TYPES.map(dealType => (
-                    <SelectItem key={dealType} value={dealType}>
-                      {dealType}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </CBRE.CBRESelect>
+                options={DEAL_TYPES}
+                placeholder="Select or type deal type..."
+              />
             </div>
 
             <div>
