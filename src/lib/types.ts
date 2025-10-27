@@ -28,7 +28,8 @@ export interface Deal {
   deal_price_usd: number // in millions
   local_currency?: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND'
   local_currency_amount?: number // in millions (or appropriate unit for currency)
-  asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres'
+  asset_class: 'Office' | 'Hotels & Hospitality' | 'Industrial & Logistics' | 'Retail' | 'Residential / Multifamily' | 'Land' | 'Data Centres' | null
+  custom_asset_class?: string | null // For D&SF: custom asset class when standard options don't apply
   services: 'Debt & Structured Finance' | 'Capital Advisors' | 'Property Sales' | 'Sale & Leaseback'
   deal_date: string // Q2 2024 format
   deal_date_sortable?: string
@@ -48,6 +49,7 @@ export interface Deal {
   slug?: string | null // For Capital Advisors: URL-friendly identifier
   // Debt & Structured Finance specific fields
   deal_type?: string | null // For D&SF: Senior Investment, Mezzanine Finance, Bridge Loan, Construction Finance
+  custom_deal_type?: string | null // For D&SF: custom deal type when standard options don't apply
   purpose?: string | null // For D&SF: Land Bank & Construction, Acquisition Finance, etc.
   loan_size_local?: number | null // For D&SF: Loan amount in local currency (millions)
   loan_size_currency?: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND' | null // For D&SF: Currency for loan size
@@ -97,7 +99,7 @@ export interface FilterPreset {
 }
 
 export type Country = Deal['country']
-export type AssetClass = Deal['asset_class']
+export type AssetClass = NonNullable<Deal['asset_class']>
 export type Services = Deal['services']
 
 export const COUNTRIES: Country[] = [
@@ -221,7 +223,8 @@ export interface CreateDealData {
   deal_price_usd: number
   local_currency: 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND'
   local_currency_amount: number
-  asset_class: AssetClass
+  asset_class: AssetClass | null
+  custom_asset_class?: string
   services: Services
   deal_date: string
   buyer: string
@@ -237,14 +240,15 @@ export interface CreateDealData {
   content_html?: string
   gallery_images?: string[]
   // Debt & Structured Finance specific fields
-  deal_type?: DealType
+  deal_type?: DealType | string | null
+  custom_deal_type?: string
   purpose?: FinancingPurpose | string
   loan_size_local?: number
   loan_size_currency?: 'USD' | 'SGD' | 'AUD' | 'JPY' | 'HKD' | 'CNY' | 'KRW' | 'TWD' | 'MVR' | 'INR' | 'NZD' | 'PHP' | 'VND' | 'THB'
   ltv_percentage?: number
   loan_term?: string
   borrower?: string
-  lender_source?: LenderSource
+  lender_source?: LenderSource | string
   // Sale & Leaseback specific fields
   yield_percentage?: number
   gla_sqm?: number

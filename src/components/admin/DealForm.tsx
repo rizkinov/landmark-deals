@@ -39,6 +39,7 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         local_currency: deal.local_currency || 'USD',
         local_currency_amount: deal.local_currency_amount || 0,
         asset_class: deal.asset_class,
+        custom_asset_class: deal.custom_asset_class || '',
         services: deal.services,
         deal_date: deal.deal_date,
         buyer: deal.buyer,
@@ -48,14 +49,15 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         is_confidential: deal.is_confidential || false,
         price_display_mode: deal.price_display_mode || 'exact',
         show_usd: deal.show_usd !== undefined ? deal.show_usd : true,
-        deal_type: deal.deal_type as any,
+        deal_type: deal.deal_type,
+        custom_deal_type: deal.custom_deal_type || '',
         purpose: deal.purpose,
         loan_size_local: deal.loan_size_local,
         loan_size_currency: deal.loan_size_currency as any,
         ltv_percentage: deal.ltv_percentage,
         loan_term: deal.loan_term,
         borrower: deal.borrower,
-        lender_source: deal.lender_source as any,
+        lender_source: deal.lender_source,
         yield_percentage: deal.yield_percentage,
         gla_sqm: deal.gla_sqm,
         tenant: deal.tenant,
@@ -229,6 +231,38 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         if (formData.loan_size_local && formData.loan_size_local <= 0) {
           throw new Error('Loan size must be greater than 0')
         }
+
+        // Handle custom asset class for D&SF deals
+        // Check if the asset_class value is from combobox and is custom (not in standard list)
+        const isCustomAssetClass = formData.asset_class &&
+          !ASSET_CLASSES.includes(formData.asset_class as any)
+
+        if (isCustomAssetClass) {
+          // Move custom value to custom_asset_class field and null out asset_class
+          formData.custom_asset_class = formData.asset_class as string
+          formData.asset_class = null
+        } else if (!formData.asset_class || formData.asset_class.trim() === '') {
+          // If no asset_class provided, default to Office
+          formData.asset_class = 'Office'
+          formData.custom_asset_class = undefined
+        } else {
+          // Standard asset class selected, clear custom field
+          formData.custom_asset_class = undefined
+        }
+
+        // Handle custom deal type for D&SF deals
+        const isCustomDealType = formData.deal_type &&
+          !DEAL_TYPES.includes(formData.deal_type as any)
+
+        if (isCustomDealType) {
+          // Move custom value to custom_deal_type field and null out deal_type
+          formData.custom_deal_type = formData.deal_type as string
+          formData.deal_type = null
+        } else if (formData.deal_type && DEAL_TYPES.includes(formData.deal_type as any)) {
+          // Standard deal type selected, clear custom field
+          formData.custom_deal_type = undefined
+        }
+        // If both are empty, that's fine - deal_type is optional for D&SF
 
         // Set buyer/seller to N/A for D&SF deals
         formData.buyer = 'N/A'
