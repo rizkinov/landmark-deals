@@ -87,11 +87,11 @@ export function CapitalAdvisorCard({ deal, searchTerm }: CapitalAdvisorCardProps
         <div className="mb-4 space-y-2">
           {/* Asset Class - Colorful */}
           <div className="flex">
-            <CBRE.CBREBadge 
-              variant="secondary" 
-              className={`${ASSET_CLASS_COLORS[deal.asset_class]} border-0 font-medium`}
+            <CBRE.CBREBadge
+              variant="secondary"
+              className={`${deal.asset_class ? ASSET_CLASS_COLORS[deal.asset_class] : 'bg-gray-100 text-gray-700'} border-0 font-medium`}
             >
-              {deal.asset_class}
+              {deal.asset_class || deal.custom_asset_class || 'N/A'}
             </CBRE.CBREBadge>
           </div>
           

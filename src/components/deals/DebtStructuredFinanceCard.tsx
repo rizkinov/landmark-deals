@@ -113,9 +113,9 @@ export function DebtStructuredFinanceCard({ deal, searchTerm }: DebtStructuredFi
         <div className="mb-4">
           <CBRE.CBREBadge
             variant="secondary"
-            className={`${ASSET_CLASS_COLORS[deal.asset_class]} border-0 font-medium`}
+            className={`${deal.asset_class ? ASSET_CLASS_COLORS[deal.asset_class] : 'bg-gray-100 text-gray-700'} border-0 font-medium`}
           >
-            {deal.asset_class}
+            {deal.asset_class || deal.custom_asset_class || 'N/A'}
           </CBRE.CBREBadge>
         </div>
 
