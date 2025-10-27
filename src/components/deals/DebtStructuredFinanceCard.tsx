@@ -31,16 +31,9 @@ export function DebtStructuredFinanceCard({ deal, searchTerm }: DebtStructuredFi
     return symbols[currency] || `${currency} `
   }
 
-  // Type guard to ensure we have D&SF data
+  // Type guard to ensure we have D&SF data (all fields are now optional)
   const isValidDSFDeal = (deal: Deal): deal is DebtStructuredFinanceDeal => {
-    return deal.services === 'Debt & Structured Finance' &&
-           !!deal.deal_type &&
-           !!deal.purpose &&
-           !!deal.loan_size_local &&
-           !!deal.loan_size_currency &&
-           !!deal.loan_term &&
-           !!deal.borrower &&
-           !!deal.lender_source
+    return deal.services === 'Debt & Structured Finance'
   }
 
   if (!isValidDSFDeal(deal)) {
@@ -137,33 +130,43 @@ export function DebtStructuredFinanceCard({ deal, searchTerm }: DebtStructuredFi
               <span className="text-gray-500 font-medium">Deal Type:</span>
               <span className="font-semibold">{deal.deal_type || deal.custom_deal_type || 'N/A'}</span>
             </div>
-            <div className="flex justify-between items-start py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Purpose:</span>
-              <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.purpose, searchTerm)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Loan Size ({deal.loan_size_currency}) / LTV:</span>
-              <span className="font-semibold">
-                {getCurrencySymbol(deal.loan_size_currency)}{deal.loan_size_local}m
-                {deal.ltv_percentage && ` / ${deal.ltv_percentage}%`}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Loan Term:</span>
-              <span className="font-semibold">{deal.loan_term}</span>
-            </div>
-            <div className="flex justify-between items-start py-1 border-b border-gray-100">
-              <span className="text-gray-500 font-medium">Borrower:</span>
-              <span className="font-semibold text-right max-w-[60%]">
-                {highlightText(deal.borrower, searchTerm)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-gray-500 font-medium">Lender Source:</span>
-              <span className="font-semibold">{deal.lender_source}</span>
-            </div>
+            {deal.purpose && (
+              <div className="flex justify-between items-start py-1 border-b border-gray-100">
+                <span className="text-gray-500 font-medium">Purpose:</span>
+                <span className="font-semibold text-right max-w-[60%]">
+                  {highlightText(deal.purpose, searchTerm)}
+                </span>
+              </div>
+            )}
+            {deal.loan_size_local && deal.loan_size_currency && (
+              <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                <span className="text-gray-500 font-medium">Loan Size ({deal.loan_size_currency}) / LTV:</span>
+                <span className="font-semibold">
+                  {getCurrencySymbol(deal.loan_size_currency)}{deal.loan_size_local}m
+                  {deal.ltv_percentage && ` / ${deal.ltv_percentage}%`}
+                </span>
+              </div>
+            )}
+            {deal.loan_term && (
+              <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                <span className="text-gray-500 font-medium">Loan Term:</span>
+                <span className="font-semibold">{deal.loan_term}</span>
+              </div>
+            )}
+            {deal.borrower && (
+              <div className="flex justify-between items-start py-1 border-b border-gray-100">
+                <span className="text-gray-500 font-medium">Borrower:</span>
+                <span className="font-semibold text-right max-w-[60%]">
+                  {highlightText(deal.borrower, searchTerm)}
+                </span>
+              </div>
+            )}
+            {deal.lender_source && (
+              <div className="flex justify-between items-center py-1">
+                <span className="text-gray-500 font-medium">Lender Source:</span>
+                <span className="font-semibold">{deal.lender_source}</span>
+              </div>
+            )}
           </div>
         </div>
 
