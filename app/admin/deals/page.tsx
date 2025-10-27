@@ -331,7 +331,7 @@ export default function AdminDealsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{deal.asset_class}</div>
+                    <div className="text-sm text-gray-900">{deal.asset_class || deal.custom_asset_class || 'N/A'}</div>
                     <div className="text-xs text-gray-500">{deal.services}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

@@ -131,11 +131,11 @@ export function DebtStructuredFinanceCard({ deal, searchTerm }: DebtStructuredFi
           <div className="grid grid-cols-1 gap-2 text-sm">
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Class:</span>
-              <span className="font-semibold">{deal.asset_class}</span>
+              <span className="font-semibold">{deal.asset_class || deal.custom_asset_class || 'N/A'}</span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Deal Type:</span>
-              <span className="font-semibold">{deal.deal_type}</span>
+              <span className="font-semibold">{deal.deal_type || deal.custom_deal_type || 'N/A'}</span>
             </div>
             <div className="flex justify-between items-start py-1 border-b border-gray-100">
               <span className="text-gray-500 font-medium">Purpose:</span>

@@ -9,6 +9,10 @@ ADD COLUMN custom_asset_class TEXT;
 -- Add comment for documentation
 COMMENT ON COLUMN deals.custom_asset_class IS 'Custom asset class for D&SF deals when standard options do not apply';
 
+-- Remove NOT NULL constraint from asset_class column
+ALTER TABLE deals
+ALTER COLUMN asset_class DROP NOT NULL;
+
 -- Update the constraint to allow NULL for asset_class (will be NULL when custom_asset_class is used)
 ALTER TABLE deals
 DROP CONSTRAINT IF EXISTS deals_asset_class_check;
