@@ -80,9 +80,9 @@ export function CBRECombobox({
     }
   }
 
-  // Filter options based on input
+  // Filter options based on input (handle null/undefined values)
   const filteredOptions = options.filter((option) =>
-    option.toLowerCase().includes(inputValue.toLowerCase())
+    option && option.toLowerCase().includes(inputValue.toLowerCase())
   )
 
   const displayValue = value || placeholder

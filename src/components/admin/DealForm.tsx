@@ -264,6 +264,15 @@ export function DealForm({ deal, isEditing = false, initialServiceType }: DealFo
         }
         // If both are empty, that's fine - deal_type is optional for D&SF
 
+        // Clean up empty string values for optional fields (convert to undefined for DB)
+        if (formData.loan_size_currency === '') {
+          formData.loan_size_currency = undefined
+        }
+        if (!formData.loan_size_local || formData.loan_size_local === 0) {
+          formData.loan_size_local = undefined
+          formData.loan_size_currency = undefined
+        }
+
         // Set buyer/seller to N/A for D&SF deals
         formData.buyer = 'N/A'
         formData.seller = 'N/A'
