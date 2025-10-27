@@ -2,9 +2,9 @@
 -- Purpose: Allow custom asset class input while maintaining constraint for standard deals
 -- Date: 2025-10-27
 
--- Add custom_asset_class column
+-- Add custom_asset_class column (only if it doesn't exist)
 ALTER TABLE deals
-ADD COLUMN custom_asset_class TEXT;
+ADD COLUMN IF NOT EXISTS custom_asset_class TEXT;
 
 -- Add comment for documentation
 COMMENT ON COLUMN deals.custom_asset_class IS 'Custom asset class for D&SF deals when standard options do not apply';
@@ -33,9 +33,16 @@ CHECK (
 );
 
 -- Add validation: at least one of asset_class or custom_asset_class must be set
-ALTER TABLE deals
-ADD CONSTRAINT deals_asset_class_required
-CHECK (
-  asset_class IS NOT NULL OR
-  custom_asset_class IS NOT NULL
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'deals_asset_class_required'
+  ) THEN
+    ALTER TABLE deals
+    ADD CONSTRAINT deals_asset_class_required
+    CHECK (
+      asset_class IS NOT NULL OR
+      custom_asset_class IS NOT NULL
+    );
+  END IF;
+END $$;
