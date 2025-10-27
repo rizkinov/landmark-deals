@@ -14,17 +14,24 @@ ALTER TABLE deals
 DROP CONSTRAINT IF EXISTS check_deal_type;
 
 -- Update the constraint to allow NULL for deal_type (will be NULL when custom_deal_type is used)
-ALTER TABLE deals
-ADD CONSTRAINT check_deal_type
-CHECK (
-  deal_type IS NULL OR
-  deal_type IN (
-    'Senior Investment',
-    'Mezzanine Finance',
-    'Bridge Loan',
-    'Construction Finance'
-  )
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'check_deal_type'
+  ) THEN
+    ALTER TABLE deals
+    ADD CONSTRAINT check_deal_type
+    CHECK (
+      deal_type IS NULL OR
+      deal_type IN (
+        'Senior Investment',
+        'Mezzanine Finance',
+        'Bridge Loan',
+        'Construction Finance'
+      )
+    );
+  END IF;
+END $$;
 
 -- Add validation: at least one of deal_type or custom_deal_type must be set when services is D&SF
 -- Note: We don't enforce this at DB level since deal_type is optional for D&SF deals
@@ -56,8 +63,10 @@ CREATE INDEX idx_deals_search ON deals USING gin(
 
 -- Update deal_type index to be conditional
 DROP INDEX IF EXISTS idx_deals_deal_type;
-CREATE INDEX idx_deals_deal_type ON deals(deal_type) WHERE deal_type IS NOT NULL;
-CREATE INDEX idx_deals_custom_deal_type ON deals(custom_deal_type) WHERE custom_deal_type IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_deals_deal_type ON deals(deal_type) WHERE deal_type IS NOT NULL;
+
+DROP INDEX IF EXISTS idx_deals_custom_deal_type;
+CREATE INDEX IF NOT EXISTS idx_deals_custom_deal_type ON deals(custom_deal_type) WHERE custom_deal_type IS NOT NULL;
 
 -- Success message
 DO $$
