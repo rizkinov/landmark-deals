@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { fetchDeals, deleteDeal } from '../../../src/lib/supabase'
 import { Deal } from '../../../src/lib/types'
 import { formatCurrencyString } from '../../../src/lib/utils'
+import { generateDealsPDF, generateFilterDescription } from '../../../src/lib/pdf-utils'
 import * as CBRE from '../../../src/components/cbre'
 import {
   PlusIcon,
@@ -14,7 +15,8 @@ import {
   TrashIcon,
   HomeIcon,
   ExclamationTriangleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  DownloadIcon
 } from '@radix-ui/react-icons'
 
 // Simple thumbnail component - no complex state management
@@ -57,6 +59,7 @@ export default function AdminDealsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const router = useRouter()
   
   // Refs for synchronized scrolling
@@ -126,6 +129,24 @@ export default function AdminDealsPage() {
     }
   }
 
+  async function handleDownloadPDF() {
+    if (filteredDeals.length === 0) {
+      alert('No deals to export. Please add deals or adjust your filters.')
+      return
+    }
+
+    setIsGeneratingPDF(true)
+    try {
+      const filterDescription = generateFilterDescription(searchTerm, filteredDeals.length)
+      await generateDealsPDF(filteredDeals, searchTerm, filterDescription)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF. Please try again.')
+    } finally {
+      setIsGeneratingPDF(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -144,7 +165,25 @@ export default function AdminDealsPage() {
             {filteredDeals.length} deals total
           </p>
         </div>
-        <div>
+        <div className="flex gap-3">
+          <CBRE.CBREButton
+            variant="outline"
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPDF || filteredDeals.length === 0}
+            className="gap-2"
+          >
+            {isGeneratingPDF ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#003F2D]"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                <DownloadIcon className="w-4 h-4" />
+                Download PDF
+              </>
+            )}
+          </CBRE.CBREButton>
           <CBRE.CBREDropdownMenu
             trigger={
               <CBRE.CBREButton variant="primary" className="gap-2">
@@ -312,7 +351,7 @@ export default function AdminDealsPage() {
                         </div>
                         {deal.annual_rent && deal.rent_currency && (
                           <div className="text-xs text-gray-500">
-                            {formatCurrencyString(deal.annual_rent, deal.rent_currency)}m
+                            {formatCurrencyString(deal.annual_rent, deal.rent_currency as 'AUD' | 'CNY' | 'HKD' | 'INR' | 'JPY' | 'KRW' | 'MVR' | 'MYR' | 'NZD' | 'PHP' | 'SGD' | 'THB' | 'TWD' | 'USD' | 'VND')}m
                           </div>
                         )}
                       </>
