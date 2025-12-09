@@ -6,15 +6,24 @@ import { DealGrid } from '../../src/components/deals/DealGrid'
 import { FilterSidebar } from '../../src/components/deals/FilterSidebar'
 import { FilterChips } from '../../src/components/deals/FilterChips'
 import { HeroBanner } from '../../src/components/deals/HeroBanner'
+import { ConfidentialPasswordModal } from '../../src/components/deals/ConfidentialPasswordModal'
+import { PPTLayoutModal } from '../../src/components/deals/PPTLayoutModal'
 import { useFilterState } from '../../src/hooks/use-filter-state'
 import { useFilteredDeals } from '../../src/hooks/use-filtered-deals'
+import { useConfidentialAccess } from '../../src/hooks/use-confidential-access'
 import { generateDealsPDF, generateDetailedFilterDescription } from '../../src/lib/pdf-utils'
-import { DownloadIcon } from '@radix-ui/react-icons'
+import { PPTLayout } from '../../src/lib/ppt-types'
+import { DownloadIcon, LockOpen1Icon, LockClosedIcon, FileIcon } from '@radix-ui/react-icons'
 
 function DealsPageContent() {
   const { filters, updateFilter, clearFilters, hasActiveFilters } = useFilterState()
-  const { deals, loading, error, totalCount, filteredCount, refresh } = useFilteredDeals(filters)
+  const { hasAccess: hasConfidentialAccess, grantAccess, revokeAccess, timeRemaining } = useConfidentialAccess()
+  // Pass confidential access status to filter hook so price filters include confidential deals when unlocked
+  const { deals, loading, error, totalCount, filteredCount, refresh } = useFilteredDeals(filters, hasConfidentialAccess)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const [isGeneratingPPT, setIsGeneratingPPT] = useState(false)
+  const [showPPTModal, setShowPPTModal] = useState(false)
+  const [showConfidentialModal, setShowConfidentialModal] = useState(false)
 
   async function handleDownloadPDF() {
     if (deals.length === 0) {
@@ -26,12 +35,37 @@ function DealsPageContent() {
     try {
       const filterDescription = generateDetailedFilterDescription(filters, deals.length)
       const searchTerm = filters.search || ''
-      await generateDealsPDF(deals, searchTerm, filterDescription)
+      // Pass confidential access status to show actual values if unlocked
+      await generateDealsPDF(deals, searchTerm, filterDescription, hasConfidentialAccess)
     } catch (error) {
       console.error('Error generating PDF:', error)
       alert('Error generating PDF. Please try again.')
     } finally {
       setIsGeneratingPDF(false)
+    }
+  }
+
+  async function handleDownloadPPT(layout: PPTLayout) {
+    if (deals.length === 0) {
+      alert('No deals to export. Please adjust your filters.')
+      return
+    }
+
+    setIsGeneratingPPT(true)
+    try {
+      // Use dynamic import
+      const pptModule = await import('../../src/lib/ppt-utils')
+      const { generateDealsPPT } = pptModule
+      const filterDescription = generateDetailedFilterDescription(filters, deals.length)
+      const searchTerm = filters.search || ''
+      // Pass confidential access status to show actual values if unlocked
+      await generateDealsPPT(deals, searchTerm, filterDescription, layout, hasConfidentialAccess)
+      setShowPPTModal(false)
+    } catch (error) {
+      console.error('Error generating PPT:', error)
+      alert('Error generating PowerPoint. Please try again.')
+    } finally {
+      setIsGeneratingPPT(false)
     }
   }
 
@@ -103,6 +137,46 @@ function DealsPageContent() {
                     </>
                   )}
                 </CBRE.CBREButton>
+                <CBRE.CBREButton
+                  variant="outline"
+                  onClick={() => setShowPPTModal(true)}
+                  disabled={isGeneratingPPT || deals.length === 0 || loading}
+                  className="flex-shrink-0 gap-2"
+                >
+                  {isGeneratingPPT ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#003F2D]"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FileIcon className="w-4 h-4" />
+                      Download PPT
+                    </>
+                  )}
+                </CBRE.CBREButton>
+                {hasConfidentialAccess ? (
+                  <CBRE.CBREButton
+                    variant="outline"
+                    onClick={revokeAccess}
+                    className="flex-shrink-0 gap-2 border-green-600 text-green-700 hover:bg-green-50"
+                    title={timeRemaining ? `Access expires in ${timeRemaining}` : undefined}
+                  >
+                    <LockOpen1Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Confidentials Unlocked</span>
+                    <span className="sm:hidden">Unlocked</span>
+                  </CBRE.CBREButton>
+                ) : (
+                  <CBRE.CBREButton
+                    variant="outline"
+                    onClick={() => setShowConfidentialModal(true)}
+                    className="flex-shrink-0 gap-2"
+                  >
+                    <LockClosedIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">View Confidentials</span>
+                    <span className="sm:hidden">Confidentials</span>
+                  </CBRE.CBREButton>
+                )}
                 <CBRE.CBREButton 
                   variant="action"
                   asChild
@@ -131,10 +205,27 @@ function DealsPageContent() {
             deals={deals}
             loading={loading}
             searchTerm={filters.search}
+            showConfidentialPrices={hasConfidentialAccess}
           />
         </div>
         </div>
       </div>
+
+      {/* Confidential Password Modal */}
+      <ConfidentialPasswordModal
+        isOpen={showConfidentialModal}
+        onClose={() => setShowConfidentialModal(false)}
+        onSuccess={() => {}}
+        grantAccess={grantAccess}
+      />
+
+      {/* PPT Layout Selection Modal */}
+      <PPTLayoutModal
+        isOpen={showPPTModal}
+        onClose={() => setShowPPTModal(false)}
+        onSelect={handleDownloadPPT}
+        isGenerating={isGeneratingPPT}
+      />
     </div>
   )
 }

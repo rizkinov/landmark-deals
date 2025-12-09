@@ -150,7 +150,8 @@ export function generateFilename(searchTerm: string, totalDeals: number): string
 }
 
 // Format deal value based on service type
-function formatDealValue(deal: Deal): string {
+// showConfidentialPrices: if true, show actual value even for confidential deals
+function formatDealValue(deal: Deal, showConfidentialPrices: boolean = false): string {
   if (deal.services === 'Debt & Structured Finance') {
     if (deal.loan_size_local && deal.loan_size_currency) {
       return `${formatCurrencyString(deal.loan_size_local, deal.loan_size_currency)}m`
@@ -165,20 +166,25 @@ function formatDealValue(deal: Deal): string {
     return 'N/A'
   }
   
-  // Property Sales and Capital Advisors
-  if (deal.is_confidential || deal.price_display_mode === 'confidential') {
+  // Check if confidential - unless user has unlocked access
+  const isConfidential = deal.is_confidential || deal.price_display_mode === 'confidential'
+  if (isConfidential && !showConfidentialPrices) {
     return 'Confidential'
   }
   
-  if (deal.price_display_mode === 'over') {
+  // Show actual value (either not confidential, or user has access)
+  // Add (Confidential) marker if this was a confidential value that user unlocked
+  const confidentialMarker = isConfidential && showConfidentialPrices ? '\n(Confidential)' : ''
+  
+  if (deal.price_display_mode === 'over' && !isConfidential) {
     return `Over ${formatCurrencyString(deal.deal_price_usd, 'USD')}`
   }
   
-  if (deal.price_display_mode === 'approx') {
+  if (deal.price_display_mode === 'approx' && !isConfidential) {
     return `Approx. ${formatCurrencyString(deal.deal_price_usd, 'USD')}`
   }
   
-  return formatCurrencyString(deal.deal_price_usd, 'USD')
+  return formatCurrencyString(deal.deal_price_usd, 'USD') + confidentialMarker
 }
 
 // Format parties based on service type
@@ -199,7 +205,8 @@ function formatParties(deal: Deal): string {
 export async function generateDealsPDF(
   deals: Deal[],
   searchTerm: string,
-  filterDescription: string
+  filterDescription: string,
+  showConfidentialPrices: boolean = false
 ): Promise<void> {
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -211,18 +218,18 @@ export async function generateDealsPDF(
   doc.setFillColor(CBRE_DARK_GREEN[0], CBRE_DARK_GREEN[1], CBRE_DARK_GREEN[2])
   doc.rect(0, 0, doc.internal.pageSize.getWidth(), 25, 'F') // Increased height for more spacing
 
-  // Title in white - using serif font (times) for Financier Display feel
+  // Title in white - Times font for titles
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(18)
   doc.setFont('times', 'bold')
   doc.text('CBRE Landmark Deals Report', 15, 12)
 
-  // Filter description with more bottom margin
+  // Filter description - helvetica (closest to Tahoma available in jsPDF)
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  doc.text(filterDescription, 15, 20) // Moved down from 18 to 20
+  doc.text(filterDescription, 15, 20)
 
-  // Generation date (right aligned)
+  // Generation date (right aligned) - helvetica
   const genDate = new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -257,7 +264,7 @@ export async function generateDealsPDF(
     tableData.push([
       propertyCell,
       `${deal.location}, ${deal.country}`,
-      formatDealValue(deal),
+      formatDealValue(deal, showConfidentialPrices),
       `${deal.asset_class || deal.custom_asset_class || 'N/A'} / ${deal.services}`,
       deal.deal_date || 'N/A',
       formatParties(deal),

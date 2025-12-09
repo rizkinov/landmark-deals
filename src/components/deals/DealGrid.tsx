@@ -7,6 +7,7 @@ interface DealGridProps {
   deals: Deal[]
   loading: boolean
   searchTerm?: string
+  showConfidentialPrices?: boolean
 }
 
 // Skeleton card for loading state
@@ -67,7 +68,7 @@ function EmptyState({ searchTerm }: { searchTerm?: string }) {
   )
 }
 
-export function DealGrid({ deals, loading, searchTerm }: DealGridProps) {
+export function DealGrid({ deals, loading, searchTerm, showConfidentialPrices = false }: DealGridProps) {
   // Show loading skeletons
   if (loading) {
     return (
@@ -96,6 +97,7 @@ export function DealGrid({ deals, loading, searchTerm }: DealGridProps) {
           key={deal.id}
           deal={deal}
           searchTerm={searchTerm}
+          showConfidentialPrices={showConfidentialPrices}
         />
       ))}
     </div>

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Deal, FilterState, DealsResponse } from '../lib/types'
 import { fetchFilteredDeals, subscribeToDeals } from '../lib/supabase'
 import { useDebounce } from './use-debounce'
 
-export function useFilteredDeals(filters: FilterState) {
+export function useFilteredDeals(filters: FilterState, showConfidentialPrices: boolean = false) {
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,7 +20,7 @@ export function useFilteredDeals(filters: FilterState) {
       setError(null)
       
       try {
-        const response: DealsResponse = await fetchFilteredDeals(debouncedFilters)
+        const response: DealsResponse = await fetchFilteredDeals(debouncedFilters, showConfidentialPrices)
         setDeals(response.data)
         setTotalCount(response.total)
         setFilteredCount(response.filtered)
@@ -35,13 +35,13 @@ export function useFilteredDeals(filters: FilterState) {
     }
 
     fetchDeals()
-  }, [debouncedFilters])
+  }, [debouncedFilters, showConfidentialPrices])
 
   // Subscribe to real-time updates
   useEffect(() => {
-    const unsubscribe = subscribeToDeals((updatedDeals: Deal[]) => {
+    const unsubscribe = subscribeToDeals(() => {
       // Re-fetch with current filters when data changes
-      fetchFilteredDeals(debouncedFilters)
+      fetchFilteredDeals(debouncedFilters, showConfidentialPrices)
         .then((response) => {
           setDeals(response.data)
           setTotalCount(response.total)
@@ -53,15 +53,15 @@ export function useFilteredDeals(filters: FilterState) {
     })
 
     return unsubscribe
-  }, [debouncedFilters])
+  }, [debouncedFilters, showConfidentialPrices])
 
   // Refresh function for manual refresh
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true)
     setError(null)
     
     try {
-      const response: DealsResponse = await fetchFilteredDeals(debouncedFilters)
+      const response: DealsResponse = await fetchFilteredDeals(debouncedFilters, showConfidentialPrices)
       setDeals(response.data)
       setTotalCount(response.total)
       setFilteredCount(response.filtered)
@@ -70,7 +70,7 @@ export function useFilteredDeals(filters: FilterState) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [debouncedFilters, showConfidentialPrices])
 
   return {
     deals,

@@ -56,7 +56,7 @@ export async function fetchDeals(): Promise<Deal[]> {
   return data || []
 }
 
-export async function fetchFilteredDeals(filters: FilterState): Promise<DealsResponse> {
+export async function fetchFilteredDeals(filters: FilterState, showConfidentialPrices: boolean = false): Promise<DealsResponse> {
   let query = supabase
     .from('deals')
     .select('*', { count: 'exact' })
@@ -82,10 +82,12 @@ export async function fetchFilteredDeals(filters: FilterState): Promise<DealsRes
   }
 
   // Apply price range filter (always use USD as the filter currency)
-  // Only apply price filtering to non-confidential deals
+  // When showConfidentialPrices is true, include confidential deals in price filtering
   if (filters.priceRange.min !== null || filters.priceRange.max !== null) {
-    // First filter out confidential deals when price filtering is applied
-    query = query.eq('is_confidential', false)
+    // Only filter out confidential deals when price filtering is applied AND user doesn't have access
+    if (!showConfidentialPrices) {
+      query = query.eq('is_confidential', false)
+    }
     
     if (filters.priceRange.min !== null) {
       query = query.gte('deal_price_usd', filters.priceRange.min)

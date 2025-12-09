@@ -7,9 +7,10 @@ import Link from 'next/link'
 interface CapitalAdvisorCardProps {
   deal: Deal
   searchTerm?: string
+  showConfidentialPrices?: boolean
 }
 
-export function CapitalAdvisorCard({ deal, searchTerm }: CapitalAdvisorCardProps) {
+export function CapitalAdvisorCard({ deal, searchTerm, showConfidentialPrices = false }: CapitalAdvisorCardProps) {
   // Highlight search terms in text
   const highlightText = (text: string, searchTerm?: string) => {
     if (!searchTerm) return text

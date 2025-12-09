@@ -205,6 +205,25 @@ export async function deactivateAdminUser(adminId: string) {
   if (error) throw error
 }
 
+// Send password reset email to admin user
+export async function resetAdminPassword(email: string) {
+  // Get the redirect URL based on current environment
+  const redirectUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/admin/reset-password`
+    : undefined
+  
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl
+  })
+  
+  if (error) throw error
+  
+  return {
+    message: `Password reset email sent to ${email}`,
+    email: email
+  }
+}
+
 // Log admin action for audit trail
 export async function logAdminAction(action: string, targetEmail?: string, details?: any) {
   const { error } = await supabase.rpc('log_admin_action', {

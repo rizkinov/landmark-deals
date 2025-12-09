@@ -6,9 +6,10 @@ import * as CBRE from '../cbre'
 interface DebtStructuredFinanceCardProps {
   deal: Deal
   searchTerm?: string
+  showConfidentialPrices?: boolean
 }
 
-export function DebtStructuredFinanceCard({ deal, searchTerm }: DebtStructuredFinanceCardProps) {
+export function DebtStructuredFinanceCard({ deal, searchTerm, showConfidentialPrices = false }: DebtStructuredFinanceCardProps) {
   // Currency symbol mapping
   const getCurrencySymbol = (currency: string): string => {
     const symbols: Record<string, string> = {

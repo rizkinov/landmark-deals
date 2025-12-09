@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminUsers, createAdminUser, deactivateAdminUser, getAdminRole, logAdminAction } from '../../lib/auth'
+import { getAdminUsers, createAdminUser, deactivateAdminUser, resetAdminPassword, getAdminRole, logAdminAction } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import * as CBRE from '../cbre'
 import { PlusIcon, PersonIcon } from '@radix-ui/react-icons'
@@ -101,6 +101,18 @@ export function AdminManagement() {
       alert('Admin invitation deleted successfully!')
     } catch (error) {
       alert(`Failed to delete invitation: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handleResetPassword = async (email: string) => {
+    if (!confirm(`Send password reset email to ${email}?\n\nThey will receive an email with a link to set a new password.`)) return
+
+    try {
+      await resetAdminPassword(email)
+      await logAdminAction('reset_password', email)
+      alert(`✅ Password reset email sent!\n\n📧 An email has been sent to ${email} with instructions to reset their password.\n\n⏰ The reset link will expire in 24 hours.`)
+    } catch (error) {
+      alert(`Failed to send reset email: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -308,7 +320,19 @@ export function AdminManagement() {
                     }
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                      {/* Reset Password - only for active users with auth_user_id */}
+                      {admin.auth_user_id && admin.is_active && (
+                        <CBRE.CBREButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResetPassword(admin.email)}
+                          className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                        >
+                          Reset Password
+                        </CBRE.CBREButton>
+                      )}
+                      {/* Deactivate - only for active non-super-admin users */}
                       {admin.is_active && admin.role !== 'super_admin' && (
                         <CBRE.CBREButton
                           variant="outline"
@@ -319,6 +343,7 @@ export function AdminManagement() {
                           Deactivate
                         </CBRE.CBREButton>
                       )}
+                      {/* Delete Invitation - only for pending invitations */}
                       {!admin.auth_user_id && (
                         <CBRE.CBREButton
                           variant="outline"
@@ -329,7 +354,8 @@ export function AdminManagement() {
                           Delete Invitation
                         </CBRE.CBREButton>
                       )}
-                      {admin.role === 'super_admin' && (
+                      {/* Show protected label for super_admin with no other actions */}
+                      {admin.role === 'super_admin' && !admin.auth_user_id && (
                         <span className="text-xs text-gray-500">Protected</span>
                       )}
                     </div>

@@ -10,23 +10,28 @@ import { SaleLeasebackCard } from './SaleLeasebackCard'
 interface DealCardProps {
   deal: Deal
   searchTerm?: string
+  showConfidentialPrices?: boolean
 }
 
-export function DealCard({ deal, searchTerm }: DealCardProps) {
+export function DealCard({ deal, searchTerm, showConfidentialPrices = false }: DealCardProps) {
   // If this is a Capital Advisors deal, render the specialized card
   if (deal.services === 'Capital Advisors') {
-    return <CapitalAdvisorCard deal={deal} searchTerm={searchTerm} />
+    return <CapitalAdvisorCard deal={deal} searchTerm={searchTerm} showConfidentialPrices={showConfidentialPrices} />
   }
 
   // If this is a Debt & Structured Finance deal, render the specialized card
   if (deal.services === 'Debt & Structured Finance') {
-    return <DebtStructuredFinanceCard deal={deal} searchTerm={searchTerm} />
+    return <DebtStructuredFinanceCard deal={deal} searchTerm={searchTerm} showConfidentialPrices={showConfidentialPrices} />
   }
 
   // If this is a Sale & Leaseback deal, render the specialized card
   if (deal.services === 'Sale & Leaseback') {
-    return <SaleLeasebackCard deal={deal} searchTerm={searchTerm} />
+    return <SaleLeasebackCard deal={deal} searchTerm={searchTerm} showConfidentialPrices={showConfidentialPrices} />
   }
+
+  // Determine if this deal should show confidential pricing
+  const isConfidential = deal.price_display_mode === 'confidential' || deal.is_confidential
+  const shouldShowActualPrice = !isConfidential || showConfidentialPrices
 
   // Highlight search terms in text
   const highlightText = (text: string, searchTerm?: string) => {
@@ -96,7 +101,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
 
         {/* Deal Price */}
         <div className="mb-4">
-          {deal.price_display_mode === 'confidential' || deal.is_confidential ? (
+          {!shouldShowActualPrice ? (
             <div className="text-2xl font-bold text-gray-900 mb-1">
               <span>
                 Confidential
@@ -104,6 +109,16 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
             </div>
           ) : (
             <>
+              {/* Confidential unlocked indicator */}
+              {isConfidential && showConfidentialPrices && (
+                <div className="text-xs text-amber-600 font-medium mb-1 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                  </svg>
+                  Confidential (Unlocked)
+                </div>
+              )}
               {/* USD Display */}
               {deal.show_usd !== false ? (
                 <div className="text-2xl font-bold text-gray-900 mb-1">
@@ -111,7 +126,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
                     const currencyResult = formatPriceWithMode(
                       deal.deal_price_usd,
                       'USD',
-                      deal.price_display_mode || 'exact',
+                      isConfidential ? 'exact' : (deal.price_display_mode || 'exact'),
                       { includeBillionAnnotation: true }
                     )
                     return (
@@ -136,7 +151,7 @@ export function DealCard({ deal, searchTerm }: DealCardProps) {
                   {formatPriceWithMode(
                     deal.local_currency_amount,
                     deal.local_currency,
-                    deal.price_display_mode || 'exact'
+                    isConfidential ? 'exact' : (deal.price_display_mode || 'exact')
                   ).formatted}
                 </div>
               )}
