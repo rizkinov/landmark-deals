@@ -135,8 +135,10 @@ Database components have dependencies that require this exact sequence:
 - **24-hour access**: Valid token stored in localStorage after successful authentication
 - **Admin bypass**: Authenticated admins automatically bypass site password
 - **Admin configurable**: Any admin can change site password via Settings page
-- **Initial password**: 'greg' (should be changed in production)
-- **Setup guide**: See `docs/SITE-ACCESS-SETUP.md` for complete implementation
+- **Automatic rotation**: Password auto-rotates on the 1st of every month (Vercel Cron)
+- **Email notifications**: New passwords sent to configured recipients via Resend API
+- **Secure generation**: 16-char passwords with uppercase, lowercase, numbers, and symbols
+- **Setup guide**: See `docs/SITE-ACCESS-SETUP.md` and `docs/PASSWORD-ROTATION-SETUP.md`
 - **Development note**: When testing site password, use incognito/private browsing or clear localStorage to reset authentication state
 
 ### Database Migration Pattern
@@ -156,6 +158,12 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NEXT_PUBLIC_STORAGE_BUCKET=property-images
 MAX_FILE_SIZE=5242880
 ALLOWED_FILE_TYPES=image/jpeg,image/jpg,image/png,image/gif,image/webp
+
+# Password rotation and email notifications
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=Landmark Deals <noreply@yourdomain.com>
+CRON_SECRET=your_secure_cron_secret
+NEXT_PUBLIC_SITE_URL=https://your-site-url.vercel.app
 ```
 
 ## Component Development Guidelines

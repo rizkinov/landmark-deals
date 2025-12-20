@@ -9,7 +9,10 @@ import {
   CheckCircledIcon,
   LockClosedIcon,
   EyeOpenIcon,
-  EyeClosedIcon
+  EyeClosedIcon,
+  ReloadIcon,
+  EnvelopeClosedIcon,
+  ClockIcon
 } from '@radix-ui/react-icons'
 import { fetchDeals, createDeal } from '../../../src/lib/supabase'
 import { exportDealsToCSV, downloadCSV, parseCSVToDeals, generateCSVTemplate } from '../../../src/lib/csv-utils'
@@ -29,6 +32,17 @@ export default function AdminSettingsPage() {
   const [updatingPassword, setUpdatingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
+
+  // Auto-rotation state
+  const [generatingPassword, setGeneratingPassword] = useState(false)
+  const [generatedPassword, setGeneratedPassword] = useState('')
+  const [sendEmailNotification, setSendEmailNotification] = useState(true)
+  const [rotationResult, setRotationResult] = useState<{
+    success: boolean
+    message: string
+    password?: string
+    emailSent?: boolean
+  } | null>(null)
 
   useEffect(() => {
     loadPasswordStatus()
@@ -71,7 +85,7 @@ export default function AdminSettingsPage() {
     try {
       const text = await file.text()
       const deals = parseCSVToDeals(text)
-      
+
       if (deals.length === 0) {
         alert('No valid deals found in CSV file')
         return
@@ -96,7 +110,7 @@ export default function AdminSettingsPage() {
       }
 
       alert(`Import completed!\nImported: ${imported} deals\nErrors: ${errors} deals`)
-      
+
     } catch (error) {
       console.error('Error importing CSV:', error)
       alert('Error importing CSV file. Please check the format and try again.')
@@ -153,6 +167,58 @@ export default function AdminSettingsPage() {
     } finally {
       setUpdatingPassword(false)
     }
+  }
+
+  const handleAutoRotatePassword = async () => {
+    if (!confirm('This will generate a new secure password and send it to the configured recipients. Continue?')) {
+      return
+    }
+
+    setGeneratingPassword(true)
+    setRotationResult(null)
+    setGeneratedPassword('')
+
+    try {
+      const response = await fetch('/api/admin/rotate-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sendEmail: sendEmailNotification,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setGeneratedPassword(data.password)
+        setRotationResult({
+          success: true,
+          message: 'Password rotated successfully!',
+          password: data.password,
+          emailSent: data.emailSent,
+        })
+        await loadPasswordStatus()
+      } else {
+        setRotationResult({
+          success: false,
+          message: data.error || 'Failed to rotate password',
+        })
+      }
+    } catch (error) {
+      setRotationResult({
+        success: false,
+        message: 'An unexpected error occurred',
+      })
+    } finally {
+      setGeneratingPassword(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    alert('Password copied to clipboard!')
   }
 
   return (
@@ -271,6 +337,122 @@ export default function AdminSettingsPage() {
               <strong>Note:</strong> Admin users are automatically granted access and do not need to enter the site password. This password only affects public access to the deals pages.
             </p>
           </div>
+
+          {/* Automatic Password Rotation Section */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <ReloadIcon className="w-4 h-4 text-gray-700" />
+              <h4 className="text-md font-semibold text-gray-900">
+                Automatic Password Rotation
+              </h4>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Generate a new secure password and optionally send it to the configured recipients. Passwords are automatically rotated on the 1st of every month.
+            </p>
+
+            {/* Next rotation info */}
+            <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded flex items-center gap-2">
+              <ClockIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-700">
+                Next automatic rotation:{' '}
+                <strong>
+                  {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </strong>
+              </span>
+            </div>
+
+            {/* Email recipients */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Recipients
+              </label>
+              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <EnvelopeClosedIcon className="w-4 h-4 text-gray-500" />
+                  <span>rizki.novianto@cbre.com</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <EnvelopeClosedIcon className="w-4 h-4 text-gray-500" />
+                  <span>Christy.Chan@cbre.com</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Send email checkbox */}
+            <div className="mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sendEmailNotification}
+                  onChange={(e) => setSendEmailNotification(e.target.checked)}
+                  className="w-4 h-4 text-[#003F2D] border-gray-300 rounded focus:ring-[#003F2D]"
+                  disabled={generatingPassword}
+                />
+                <span className="text-sm text-gray-700">
+                  Send email notification to recipients
+                </span>
+              </label>
+            </div>
+
+            {/* Generated password display */}
+            {generatedPassword && (
+              <div className="mb-4 p-4 bg-green-50 border-2 border-dashed border-green-300 rounded">
+                <p className="text-xs text-green-600 uppercase tracking-wide mb-2">New Password</p>
+                <div className="flex items-center gap-3">
+                  <code className="text-lg font-mono font-bold text-green-800 tracking-wider">
+                    {generatedPassword}
+                  </code>
+                  <CBRE.CBREButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(generatedPassword)}
+                    className="text-xs"
+                  >
+                    Copy
+                  </CBRE.CBREButton>
+                </div>
+              </div>
+            )}
+
+            {/* Rotation result message */}
+            {rotationResult && (
+              <div className={`mb-4 px-4 py-3 text-sm flex items-center gap-2 ${rotationResult.success
+                  ? 'bg-green-50 border border-green-200 text-green-700'
+                  : 'bg-red-50 border border-red-200 text-red-700'
+                }`}>
+                {rotationResult.success ? (
+                  <>
+                    <CheckCircledIcon className="w-4 h-4" />
+                    {rotationResult.message}
+                    {rotationResult.emailSent && (
+                      <span className="ml-2 text-xs bg-green-100 px-2 py-0.5 rounded">
+                        Email sent ✓
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  rotationResult.message
+                )}
+              </div>
+            )}
+
+            <CBRE.CBREButton
+              type="button"
+              variant="outline"
+              onClick={handleAutoRotatePassword}
+              disabled={generatingPassword}
+              className="gap-2"
+            >
+              <ReloadIcon className={`w-4 h-4 ${generatingPassword ? 'animate-spin' : ''}`} />
+              {generatingPassword ? 'Generating...' : 'Generate & Rotate Password Now'}
+            </CBRE.CBREButton>
+          </div>
         </CBRE.CBRECard>
 
         {/* General Settings */}
@@ -318,9 +500,9 @@ export default function AdminSettingsPage() {
               <p className="text-sm text-gray-600 mb-3">
                 Download all deals data as CSV file
               </p>
-              <CBRE.CBREButton 
-                variant="outline" 
-                size="sm" 
+              <CBRE.CBREButton
+                variant="outline"
+                size="sm"
                 className="gap-2"
                 onClick={handleExportCSV}
                 disabled={loading}
@@ -337,9 +519,9 @@ export default function AdminSettingsPage() {
                 Upload deals from CSV file
               </p>
               <div className="space-y-2">
-                <CBRE.CBREButton 
-                  variant="outline" 
-                  size="sm" 
+                <CBRE.CBREButton
+                  variant="outline"
+                  size="sm"
                   className="gap-2"
                   onClick={handleImportCSV}
                   disabled={importing}
@@ -347,9 +529,9 @@ export default function AdminSettingsPage() {
                   <UploadIcon className="w-4 h-4" />
                   {importing ? 'Importing...' : 'Import CSV'}
                 </CBRE.CBREButton>
-                <CBRE.CBREButton 
-                  variant="outline" 
-                  size="sm" 
+                <CBRE.CBREButton
+                  variant="outline"
+                  size="sm"
                   className="gap-2 text-xs"
                   onClick={handleDownloadTemplate}
                 >
@@ -357,7 +539,7 @@ export default function AdminSettingsPage() {
                   Download Template
                 </CBRE.CBREButton>
               </div>
-              
+
               {/* Hidden file input */}
               <input
                 type="file"

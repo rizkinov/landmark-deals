@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/rotate-password",
+            "schedule": "0 0 1 * *"
+        }
+    ]
+}
