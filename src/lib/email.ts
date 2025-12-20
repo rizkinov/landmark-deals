@@ -205,6 +205,160 @@ This is an automated message from CBRE Capital Markets - Landmark Deals.
 }
 
 /**
+ * Send notification email with both site access and confidential passwords
+ */
+export async function sendBothPasswordsNotification(
+  recipients: string[],
+  siteAccessPassword: string,
+  confidentialPassword: string,
+  expiresAt?: Date
+): Promise<EmailResult> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://landmark-deals.vercel.app'
+  const confidentialUrl = `${siteUrl}/view-confidentials`
+  const expiryText = expiresAt
+    ? `These passwords are valid until ${expiresAt.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}.`
+    : 'These passwords will be rotated on the 1st of next month.'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Access Passwords</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="min-width: 100%; background-color: #f4f4f4;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #003F2D; padding: 30px 40px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold;">
+                CBRE Capital Markets
+              </h1>
+              <p style="margin: 10px 0 0; color: #17E88F; font-size: 14px;">
+                Landmark Deals Platform
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #003F2D; font-size: 20px;">
+                🔐 New Access Passwords
+              </h2>
+              
+              <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                The access passwords for Landmark Deals have been updated. Please use the new passwords below.
+              </p>
+              
+              <!-- Site Access Password Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td style="background-color: #f0fdf4; border: 2px solid #22c55e; padding: 20px; border-radius: 4px;">
+                    <p style="margin: 0 0 8px; color: #16a34a; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                      Site Access Password
+                    </p>
+                    <p style="margin: 0; color: #15803d; font-size: 22px; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px;">
+                      ${siteAccessPassword}
+                    </p>
+                    <p style="margin: 8px 0 0; color: #4ade80; font-size: 12px;">
+                      Use at: ${siteUrl}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Confidential Password Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; border-radius: 4px;">
+                    <p style="margin: 0 0 8px; color: #d97706; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+                      Confidential Access Password
+                    </p>
+                    <p style="margin: 0; color: #b45309; font-size: 22px; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px;">
+                      ${confidentialPassword}
+                    </p>
+                    <p style="margin: 8px 0 0; color: #fbbf24; font-size: 12px;">
+                      Use at: ${confidentialUrl}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 20px 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                ${expiryText}
+              </p>
+              
+              <!-- Security Note -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin-top: 20px;">
+                    <p style="margin: 0; color: #991b1b; font-size: 13px;">
+                      <strong>⚠️ Security Note:</strong> Please do not share these passwords outside of authorized team members. The confidential password grants access to sensitive deal information.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 20px 40px; text-align: center; border-top: 1px solid #e9ecef;">
+              <p style="margin: 0; color: #999999; font-size: 12px;">
+                This is an automated message from CBRE Capital Markets - Landmark Deals.
+                <br>
+                © ${new Date().getFullYear()} CBRE. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+CBRE Capital Markets - Landmark Deals
+
+🔐 New Access Passwords
+
+The access passwords for Landmark Deals have been updated.
+
+SITE ACCESS PASSWORD: ${siteAccessPassword}
+Use at: ${siteUrl}
+
+CONFIDENTIAL ACCESS PASSWORD: ${confidentialPassword}
+Use at: ${confidentialUrl}
+
+${expiryText}
+
+⚠️ Security Note: Please do not share these passwords outside of authorized team members.
+
+---
+This is an automated message from CBRE Capital Markets - Landmark Deals.
+© ${new Date().getFullYear()} CBRE. All rights reserved.
+  `.trim()
+
+  return sendEmail({
+    to: recipients,
+    subject: '🔐 Landmark Deals - New Access Passwords (Site + Confidential)',
+    html,
+    text,
+  })
+}
+
+/**
  * List of password recipients
  * These emails will receive the new password when it's rotated
  * 
@@ -216,4 +370,5 @@ export const PASSWORD_RECIPIENTS = [
   'rizki.novianto@cbre.com',
   // 'Christy.Chan@cbre.com', // Uncomment after domain verification in Resend
 ]
+
 

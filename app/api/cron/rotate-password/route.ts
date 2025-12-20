@@ -1,17 +1,17 @@
 /**
- * Cron Job: Rotate Site Access Password
+ * Cron Job: Rotate Site Access and Confidential Passwords
  * Runs on the 1st of every month at 00:00 UTC
  * 
  * This endpoint:
- * 1. Generates a new secure password
- * 2. Updates it in the database
+ * 1. Generates new secure passwords for both site access and confidentials
+ * 2. Updates them in the database
  * 3. Sends notification emails to configured recipients
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateSecurePassword } from '@/src/lib/password-generator'
-import { sendPasswordNotification, PASSWORD_RECIPIENTS } from '@/src/lib/email'
+import { sendBothPasswordsNotification, PASSWORD_RECIPIENTS } from '@/src/lib/email'
 
 // Initialize Supabase client with service role for server-side operations
 function getSupabaseClient() {
@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
 
         console.log('Starting password rotation...')
 
-        // Generate a new secure password
-        const newPassword = generateSecurePassword({
+        // Generate new secure passwords for both
+        const siteAccessPassword = generateSecurePassword({
             length: 16,
             includeUppercase: true,
             includeLowercase: true,
@@ -68,48 +68,70 @@ export async function GET(request: NextRequest) {
             includeSymbols: true,
         })
 
-        console.log('Generated new password')
+        const confidentialPassword = generateSecurePassword({
+            length: 16,
+            includeUppercase: true,
+            includeLowercase: true,
+            includeNumbers: true,
+            includeSymbols: true,
+        })
+
+        console.log('Generated new passwords')
 
         // Initialize Supabase client
         const supabase = getSupabaseClient()
 
-        // Update password in database using the stored procedure
-        const { data, error } = await supabase.rpc('update_site_password', {
-            new_password: newPassword,
-            admin_user_id: null // System-generated, no admin user
+        // Update site access password
+        const { error: siteError } = await supabase.rpc('update_site_password', {
+            new_password: siteAccessPassword,
+            admin_user_id: null // System-generated
         })
 
-        if (error) {
-            console.error('Failed to update password in database:', error)
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Database update failed',
-                    details: error.message
-                },
-                { status: 500 }
-            )
+        if (siteError) {
+            console.error('Failed to update site access password:', siteError)
+            return NextResponse.json({
+                success: false,
+                error: 'Site access password update failed',
+                details: siteError.message
+            }, { status: 500 })
         }
 
-        console.log('Password updated in database')
+        console.log('Site access password updated')
+
+        // Update confidential password
+        const { error: confidentialError } = await supabase.rpc('update_confidential_password', {
+            new_password: confidentialPassword,
+            admin_user_id: null // System-generated
+        })
+
+        if (confidentialError) {
+            console.error('Failed to update confidential password:', confidentialError)
+            return NextResponse.json({
+                success: false,
+                error: 'Confidential password update failed',
+                details: confidentialError.message
+            }, { status: 500 })
+        }
+
+        console.log('Confidential password updated')
 
         // Calculate next rotation date (1st of next month)
         const now = new Date()
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
-        // Send notification emails
-        const emailResult = await sendPasswordNotification(
+        // Send notification emails with both passwords
+        const emailResult = await sendBothPasswordsNotification(
             PASSWORD_RECIPIENTS,
-            newPassword,
+            siteAccessPassword,
+            confidentialPassword,
             nextMonth
         )
 
         if (!emailResult.success) {
             console.error('Email notification failed:', emailResult.error)
-            // Password was updated, but email failed - log but don't fail the request
             return NextResponse.json({
                 success: true,
-                warning: 'Password updated but email notification failed',
+                warning: 'Passwords updated but email notification failed',
                 emailError: emailResult.error,
                 timestamp: new Date().toISOString(),
             })
@@ -120,9 +142,10 @@ export async function GET(request: NextRequest) {
         // Log the rotation event
         try {
             await supabase.from('audit_log').insert({
-                action: 'site_password_rotated',
+                action: 'passwords_rotated',
                 actor_email: 'system@cron',
                 details: {
+                    passwords_rotated: ['site_access', 'confidential'],
                     recipients: PASSWORD_RECIPIENTS,
                     next_rotation: nextMonth.toISOString(),
                     email_sent: true,
@@ -130,13 +153,12 @@ export async function GET(request: NextRequest) {
                 created_at: new Date().toISOString(),
             })
         } catch (auditError) {
-            // Audit logging is non-critical
             console.warn('Failed to log audit event:', auditError)
         }
 
         return NextResponse.json({
             success: true,
-            message: 'Password rotated and notifications sent',
+            message: 'Both passwords rotated and notifications sent',
             recipients: PASSWORD_RECIPIENTS,
             nextRotation: nextMonth.toISOString(),
             timestamp: new Date().toISOString(),
@@ -158,3 +180,4 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     return GET(request)
 }
+

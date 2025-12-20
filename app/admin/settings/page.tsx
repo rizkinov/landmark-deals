@@ -36,12 +36,12 @@ export default function AdminSettingsPage() {
 
   // Auto-rotation state
   const [generatingPassword, setGeneratingPassword] = useState(false)
-  const [generatedPassword, setGeneratedPassword] = useState('')
+  const [generatedSitePassword, setGeneratedSitePassword] = useState('')
+  const [generatedConfidentialPassword, setGeneratedConfidentialPassword] = useState('')
   const [sendEmailNotification, setSendEmailNotification] = useState(true)
   const [rotationResult, setRotationResult] = useState<{
     success: boolean
     message: string
-    password?: string
     emailSent?: boolean
   } | null>(null)
 
@@ -197,7 +197,7 @@ export default function AdminSettingsPage() {
   }
 
   const handleAutoRotatePassword = async () => {
-    if (!confirm('This will generate a new secure password and send it to the configured recipients. Continue?')) {
+    if (!confirm('This will generate new secure passwords for both Site Access and Confidential Access, and optionally send them to the configured recipients. Continue?')) {
       return
     }
 
@@ -211,7 +211,8 @@ export default function AdminSettingsPage() {
 
     setGeneratingPassword(true)
     setRotationResult(null)
-    setGeneratedPassword('')
+    setGeneratedSitePassword('')
+    setGeneratedConfidentialPassword('')
 
     try {
       const response = await fetch('/api/admin/rotate-password', {
@@ -228,20 +229,20 @@ export default function AdminSettingsPage() {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        setGeneratedPassword(data.password)
+        setGeneratedSitePassword(data.siteAccessPassword)
+        setGeneratedConfidentialPassword(data.confidentialPassword)
 
         // Determine message based on email status
-        let message = 'Password rotated successfully!'
+        let message = 'Both passwords rotated successfully!'
         if (sendEmailNotification && !data.emailSent) {
-          message = 'Password rotated! Email failed: ' + (data.emailError || 'Unknown error')
+          message = 'Passwords rotated! Email failed: ' + (data.emailError || 'Unknown error')
         } else if (data.emailSent) {
-          message = 'Password rotated and email sent!'
+          message = 'Passwords rotated and email sent!'
         }
 
         setRotationResult({
           success: true,
           message,
-          password: data.password,
           emailSent: data.emailSent,
         })
         await loadPasswordStatus()
@@ -439,24 +440,53 @@ export default function AdminSettingsPage() {
               </label>
             </div>
 
-            {/* Generated password display */}
-            {generatedPassword && (
-              <div className="mb-4 p-4 bg-green-50 border-2 border-dashed border-green-300 rounded">
-                <p className="text-xs text-green-600 uppercase tracking-wide mb-2">New Password</p>
-                <div className="flex items-center gap-3">
-                  <code className="text-lg font-mono font-bold text-green-800 tracking-wider">
-                    {generatedPassword}
-                  </code>
-                  <CBRE.CBREButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedPassword)}
-                    className="text-xs"
-                  >
-                    Copy
-                  </CBRE.CBREButton>
-                </div>
+            {/* Generated passwords display */}
+            {(generatedSitePassword || generatedConfidentialPassword) && (
+              <div className="mb-4 space-y-3">
+                {/* Site Access Password */}
+                {generatedSitePassword && (
+                  <div className="p-4 bg-green-50 border-2 border-solid border-green-400 rounded">
+                    <p className="text-xs text-green-600 uppercase tracking-wide mb-2 font-semibold">Site Access Password</p>
+                    <div className="flex items-center gap-3">
+                      <code className="text-lg font-mono font-bold text-green-800 tracking-wider">
+                        {generatedSitePassword}
+                      </code>
+                      <CBRE.CBREButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(generatedSitePassword)}
+                        className="text-xs"
+                      >
+                        Copy
+                      </CBRE.CBREButton>
+                    </div>
+                  </div>
+                )}
+
+                {/* Confidential Access Password */}
+                {generatedConfidentialPassword && (
+                  <div className="p-4 bg-amber-50 border-2 border-solid border-amber-400 rounded">
+                    <p className="text-xs text-amber-600 uppercase tracking-wide mb-2 font-semibold">Confidential Access Password</p>
+                    <div className="flex items-center gap-3">
+                      <code className="text-lg font-mono font-bold text-amber-800 tracking-wider">
+                        {generatedConfidentialPassword}
+                      </code>
+                      <CBRE.CBREButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(generatedConfidentialPassword)}
+                        className="text-xs"
+                      >
+                        Copy
+                      </CBRE.CBREButton>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-2">
+                      Use at: /view-confidentials
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -490,7 +520,7 @@ export default function AdminSettingsPage() {
               className="gap-2"
             >
               <ReloadIcon className={`w-4 h-4 ${generatingPassword ? 'animate-spin' : ''}`} />
-              {generatingPassword ? 'Generating...' : 'Generate & Rotate Password Now'}
+              {generatingPassword ? 'Generating...' : 'Generate & Rotate Both Passwords'}
             </CBRE.CBREButton>
           </div>
         </CBRE.CBRECard>

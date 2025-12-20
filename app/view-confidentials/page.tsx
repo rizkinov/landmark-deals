@@ -26,20 +26,22 @@ export default function ViewConfidentialsPage() {
         setLoading(true)
         setError('')
 
-        // Small delay for UX
-        await new Promise(resolve => setTimeout(resolve, 300))
+        try {
+            const success = await grantAccess(password)
 
-        const success = grantAccess(password)
-
-        if (success) {
-            setPassword('')
-            // Redirect to deals page after successful authentication
-            router.push('/deals')
-        } else {
-            setError('Incorrect password. Please try again.')
+            if (success) {
+                setPassword('')
+                // Redirect to deals page after successful authentication
+                router.push('/deals')
+            } else {
+                setError('Incorrect password. Please try again.')
+            }
+        } catch (err) {
+            console.error('Error verifying password:', err)
+            setError('An error occurred. Please try again.')
+        } finally {
+            setLoading(false)
         }
-
-        setLoading(false)
     }
 
     const handleGoToDeals = () => {

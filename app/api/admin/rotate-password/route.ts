@@ -1,12 +1,12 @@
 /**
  * Admin API: Manual Password Rotation
- * Allows admins to manually trigger password rotation
+ * Allows admins to manually trigger password rotation for both site access and confidentials
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateSecurePassword } from '@/src/lib/password-generator'
-import { sendPasswordNotification, PASSWORD_RECIPIENTS } from '@/src/lib/email'
+import { sendBothPasswordsNotification, PASSWORD_RECIPIENTS } from '@/src/lib/email'
 import { cookies } from 'next/headers'
 
 // Initialize Supabase client with service role for password update
@@ -112,8 +112,8 @@ async function handlePasswordRotation(
 ) {
     console.log(`Manual password rotation triggered by: ${adminData.email}`)
 
-    // Generate a new secure password
-    const newPassword = generateSecurePassword({
+    // Generate new secure passwords for both
+    const siteAccessPassword = generateSecurePassword({
         length: 16,
         includeUppercase: true,
         includeLowercase: true,
@@ -121,16 +121,38 @@ async function handlePasswordRotation(
         includeSymbols: true,
     })
 
-    // Update password in database
-    const { error: updateError } = await supabaseService.rpc('update_site_password', {
-        new_password: newPassword,
+    const confidentialPassword = generateSecurePassword({
+        length: 16,
+        includeUppercase: true,
+        includeLowercase: true,
+        includeNumbers: true,
+        includeSymbols: true,
+    })
+
+    // Update site access password
+    const { error: siteError } = await supabaseService.rpc('update_site_password', {
+        new_password: siteAccessPassword,
         admin_user_id: adminData.id
     })
 
-    if (updateError) {
-        console.error('Failed to update password:', updateError)
+    if (siteError) {
+        console.error('Failed to update site access password:', siteError)
         return NextResponse.json(
-            { error: 'Failed to update password', details: updateError.message },
+            { error: 'Failed to update site access password', details: siteError.message },
+            { status: 500 }
+        )
+    }
+
+    // Update confidential password
+    const { error: confidentialError } = await supabaseService.rpc('update_confidential_password', {
+        new_password: confidentialPassword,
+        admin_user_id: adminData.id
+    })
+
+    if (confidentialError) {
+        console.error('Failed to update confidential password:', confidentialError)
+        return NextResponse.json(
+            { error: 'Failed to update confidential password', details: confidentialError.message },
             { status: 500 }
         )
     }
@@ -145,9 +167,10 @@ async function handlePasswordRotation(
     // Send notification emails if requested
     if (sendEmail) {
         const recipients = customRecipients || PASSWORD_RECIPIENTS
-        const emailResult = await sendPasswordNotification(
+        const emailResult = await sendBothPasswordsNotification(
             recipients,
-            newPassword,
+            siteAccessPassword,
+            confidentialPassword,
             nextMonth
         )
 
@@ -161,9 +184,10 @@ async function handlePasswordRotation(
     // Log the action
     try {
         await supabaseService.from('audit_log').insert({
-            action: 'site_password_manual_rotation',
+            action: 'passwords_manual_rotation',
             actor_email: adminData.email,
             details: {
+                passwords_rotated: ['site_access', 'confidential'],
                 email_sent: emailSent,
                 email_error: emailError,
                 recipients: sendEmail ? (customRecipients || PASSWORD_RECIPIENTS) : [],
@@ -176,7 +200,10 @@ async function handlePasswordRotation(
 
     return NextResponse.json({
         success: true,
-        password: newPassword,
+        siteAccessPassword,
+        confidentialPassword,
+        // Legacy field for backward compatibility
+        password: siteAccessPassword,
         emailSent,
         emailError,
         recipients: sendEmail ? (customRecipients || PASSWORD_RECIPIENTS) : [],
@@ -185,4 +212,5 @@ async function handlePasswordRotation(
         timestamp: new Date().toISOString(),
     })
 }
+
 

@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import { supabase } from '../lib/supabase'
 
 const CONFIDENTIAL_ACCESS_KEY = 'confidential_access_token'
-const CONFIDENTIAL_PASSWORD = 'THRIVEAPAC###'
 const ACCESS_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 
 interface ConfidentialAccessState {
   hasAccess: boolean
   expiresAt: number | null
-  grantAccess: (password: string) => boolean
+  grantAccess: (password: string) => Promise<boolean>
   revokeAccess: () => void
   checkAccess: () => boolean
   timeRemaining: string | null
@@ -22,11 +22,11 @@ interface StoredAccessToken {
 
 function getStoredToken(): StoredAccessToken | null {
   if (typeof window === 'undefined') return null
-  
+
   try {
     const stored = localStorage.getItem(CONFIDENTIAL_ACCESS_KEY)
     if (!stored) return null
-    
+
     const token = JSON.parse(stored) as StoredAccessToken
     return token
   } catch {
@@ -52,14 +52,33 @@ function isTokenValid(token: StoredAccessToken | null): boolean {
 function formatTimeRemaining(expiresAt: number): string | null {
   const remaining = expiresAt - Date.now()
   if (remaining <= 0) return null
-  
+
   const hours = Math.floor(remaining / (60 * 60 * 1000))
   const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000))
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m remaining`
   }
   return `${minutes}m remaining`
+}
+
+// Verify password against database
+async function verifyConfidentialPassword(password: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('verify_confidential_password', {
+      input_password: password
+    })
+
+    if (error) {
+      console.error('Error verifying confidential password:', error)
+      return false
+    }
+
+    return data === true
+  } catch (error) {
+    console.error('Exception verifying confidential password:', error)
+    return false
+  }
 }
 
 export function useConfidentialAccess(): ConfidentialAccessState {
@@ -110,19 +129,22 @@ export function useConfidentialAccess(): ConfidentialAccessState {
   const checkAccess = useCallback((): boolean => {
     const token = getStoredToken()
     const valid = isTokenValid(token)
-    
+
     if (!valid && token) {
       // Clean up expired token
       clearStoredToken()
       setHasAccess(false)
       setExpiresAt(null)
     }
-    
+
     return valid
   }, [])
 
-  const grantAccess = useCallback((password: string): boolean => {
-    if (password !== CONFIDENTIAL_PASSWORD) {
+  const grantAccess = useCallback(async (password: string): Promise<boolean> => {
+    // Verify password against database
+    const isValid = await verifyConfidentialPassword(password)
+
+    if (!isValid) {
       return false
     }
 
@@ -163,8 +185,8 @@ export function ConfidentialAccessProvider({ children }: { children: React.React
   const accessState = useConfidentialAccess()
 
   return (
-    <ConfidentialAccessContext.Provider value={accessState}>
-      {children}
+    <ConfidentialAccessContext.Provider value= { accessState } >
+    { children }
     </ConfidentialAccessContext.Provider>
   )
 }
@@ -176,4 +198,3 @@ export function useConfidentialAccessContext(): ConfidentialAccessState {
   }
   return context
 }
-
