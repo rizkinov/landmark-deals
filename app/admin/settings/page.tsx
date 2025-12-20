@@ -17,6 +17,7 @@ import {
 import { fetchDeals, createDeal } from '../../../src/lib/supabase'
 import { exportDealsToCSV, downloadCSV, parseCSVToDeals, generateCSVTemplate } from '../../../src/lib/csv-utils'
 import { updateSitePassword, getSitePasswordStatus } from '../../../src/lib/site-access'
+import { getCurrentAdmin } from '../../../src/lib/auth'
 import type { SitePasswordStatus } from '../../../src/lib/types'
 
 export default function AdminSettingsPage() {
@@ -44,13 +45,39 @@ export default function AdminSettingsPage() {
     emailSent?: boolean
   } | null>(null)
 
+  // Admin email for API calls
+  const [adminEmail, setAdminEmail] = useState<string | null>(null)
+
+  // Next rotation date (client-side only to avoid hydration mismatch)
+  const [nextRotationDate, setNextRotationDate] = useState<string>('')
+
   useEffect(() => {
     loadPasswordStatus()
+    loadAdminData()
+    // Calculate next rotation date on client only
+    const now = new Date()
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    setNextRotationDate(nextMonth.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }))
   }, [])
 
   const loadPasswordStatus = async () => {
     const status = await getSitePasswordStatus()
     setPasswordStatus(status)
+  }
+
+  const loadAdminData = async () => {
+    try {
+      const admin = await getCurrentAdmin()
+      if (admin) {
+        setAdminEmail(admin.email)
+      }
+    } catch (error) {
+      console.error('Failed to load admin data:', error)
+    }
   }
 
   const handleExportCSV = async () => {
@@ -174,6 +201,14 @@ export default function AdminSettingsPage() {
       return
     }
 
+    if (!adminEmail) {
+      setRotationResult({
+        success: false,
+        message: 'Admin authentication required. Please refresh the page.',
+      })
+      return
+    }
+
     setGeneratingPassword(true)
     setRotationResult(null)
     setGeneratedPassword('')
@@ -186,6 +221,7 @@ export default function AdminSettingsPage() {
         },
         body: JSON.stringify({
           sendEmail: sendEmailNotification,
+          adminEmail: adminEmail,
         }),
       })
 
@@ -193,9 +229,18 @@ export default function AdminSettingsPage() {
 
       if (response.ok && data.success) {
         setGeneratedPassword(data.password)
+
+        // Determine message based on email status
+        let message = 'Password rotated successfully!'
+        if (sendEmailNotification && !data.emailSent) {
+          message = 'Password rotated! Email failed: ' + (data.emailError || 'Unknown error')
+        } else if (data.emailSent) {
+          message = 'Password rotated and email sent!'
+        }
+
         setRotationResult({
           success: true,
-          message: 'Password rotated successfully!',
+          message,
           password: data.password,
           emailSent: data.emailSent,
         })
@@ -357,11 +402,7 @@ export default function AdminSettingsPage() {
               <span className="text-sm text-gray-700">
                 Next automatic rotation:{' '}
                 <strong>
-                  {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  {nextRotationDate || 'Loading...'}
                 </strong>
               </span>
             </div>
@@ -423,8 +464,8 @@ export default function AdminSettingsPage() {
             {/* Rotation result message */}
             {rotationResult && (
               <div className={`mb-4 px-4 py-3 text-sm flex items-center gap-2 ${rotationResult.success
-                  ? 'bg-green-50 border border-green-200 text-green-700'
-                  : 'bg-red-50 border border-red-200 text-red-700'
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : 'bg-red-50 border border-red-200 text-red-700'
                 }`}>
                 {rotationResult.success ? (
                   <>

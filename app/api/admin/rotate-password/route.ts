@@ -26,138 +26,74 @@ function getSupabaseServiceClient() {
     })
 }
 
-// Get Supabase client for user authentication
-function getSupabaseClient() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase configuration missing')
-    }
-
-    return createClient(supabaseUrl, supabaseAnonKey)
-}
-
 export async function POST(request: NextRequest) {
     try {
-        // Get the access token from cookies
-        const cookieStore = await cookies()
-        const accessToken = cookieStore.get('sb-access-token')?.value
-        const refreshToken = cookieStore.get('sb-refresh-token')?.value
-
-        if (!accessToken) {
-            return NextResponse.json(
-                { error: 'Authentication required' },
-                { status: 401 }
-            )
-        }
-
-        // Verify the user is an admin
-        const supabase = getSupabaseClient()
-        const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken)
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: 'Invalid authentication' },
-                { status: 401 }
-            )
-        }
-
-        // Check if user is admin
+        // Get the service client to verify admin status
         const supabaseService = getSupabaseServiceClient()
-        const { data: adminData, error: adminError } = await supabaseService
-            .from('admin_users')
-            .select('id, email, role, is_active')
-            .eq('auth_user_id', user.id)
-            .eq('is_active', true)
-            .single()
 
-        if (adminError || !adminData) {
-            return NextResponse.json(
-                { error: 'Admin access required' },
-                { status: 403 }
-            )
-        }
+        // Get authorization from request header (passed from client)
+        const authHeader = request.headers.get('authorization')
+        let adminData = null
 
-        console.log(`Manual password rotation triggered by: ${adminData.email}`)
+        if (authHeader?.startsWith('Bearer ')) {
+            const token = authHeader.substring(7)
 
-        // Parse request body for options
-        const body = await request.json().catch(() => ({}))
-        const sendEmail = body.sendEmail !== false // Default to true
-        const customRecipients = body.recipients as string[] | undefined
+            // Verify the token and get user
+            const { data: { user }, error: authError } = await supabaseService.auth.getUser(token)
 
-        // Generate a new secure password
-        const newPassword = generateSecurePassword({
-            length: 16,
-            includeUppercase: true,
-            includeLowercase: true,
-            includeNumbers: true,
-            includeSymbols: true,
-        })
+            if (!authError && user) {
+                // Check if user is admin
+                const { data, error } = await supabaseService
+                    .from('admin_users')
+                    .select('id, email, role, is_active')
+                    .eq('auth_user_id', user.id)
+                    .eq('is_active', true)
+                    .single()
 
-        // Update password in database
-        const { error: updateError } = await supabaseService.rpc('update_site_password', {
-            new_password: newPassword,
-            admin_user_id: adminData.id
-        })
-
-        if (updateError) {
-            console.error('Failed to update password:', updateError)
-            return NextResponse.json(
-                { error: 'Failed to update password', details: updateError.message },
-                { status: 500 }
-            )
-        }
-
-        // Calculate next rotation date
-        const now = new Date()
-        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-
-        let emailSent = false
-        let emailError: string | undefined
-
-        // Send notification emails if requested
-        if (sendEmail) {
-            const recipients = customRecipients || PASSWORD_RECIPIENTS
-            const emailResult = await sendPasswordNotification(
-                recipients,
-                newPassword,
-                nextMonth
-            )
-
-            emailSent = emailResult.success
-            if (!emailResult.success) {
-                emailError = emailResult.error
-                console.error('Email notification failed:', emailError)
+                if (!error && data) {
+                    adminData = data
+                }
             }
         }
 
-        // Log the action
-        try {
-            await supabaseService.from('audit_log').insert({
-                action: 'site_password_manual_rotation',
-                actor_email: adminData.email,
-                details: {
-                    email_sent: emailSent,
-                    email_error: emailError,
-                    recipients: sendEmail ? (customRecipients || PASSWORD_RECIPIENTS) : [],
-                },
-                created_at: new Date().toISOString(),
-            })
-        } catch (auditError) {
-            console.warn('Failed to log audit event:', auditError)
+        // If no valid auth header, try to get admin email from body (for client-side calls)
+        if (!adminData) {
+            const body = await request.json().catch(() => ({}))
+
+            // Check if admin email was passed and verify it exists
+            if (body.adminEmail) {
+                const { data, error } = await supabaseService
+                    .from('admin_users')
+                    .select('id, email, role, is_active')
+                    .eq('email', body.adminEmail)
+                    .eq('is_active', true)
+                    .single()
+
+                if (!error && data) {
+                    adminData = data
+                }
+            }
+
+            // Re-parse body for other options
+            const sendEmail = body.sendEmail !== false
+            const customRecipients = body.recipients as string[] | undefined
+
+            if (!adminData) {
+                return NextResponse.json(
+                    { error: 'Admin authentication required' },
+                    { status: 401 }
+                )
+            }
+
+            return handlePasswordRotation(adminData, sendEmail, customRecipients, supabaseService)
         }
 
-        return NextResponse.json({
-            success: true,
-            password: newPassword, // Return to admin for immediate use
-            emailSent,
-            emailError,
-            recipients: sendEmail ? (customRecipients || PASSWORD_RECIPIENTS) : [],
-            rotatedBy: adminData.email,
-            nextRotation: nextMonth.toISOString(),
-            timestamp: new Date().toISOString(),
-        })
+        // Parse request body for options
+        const body = await request.json().catch(() => ({}))
+        const sendEmail = body.sendEmail !== false
+        const customRecipients = body.recipients as string[] | undefined
+
+        return handlePasswordRotation(adminData, sendEmail, customRecipients, supabaseService)
 
     } catch (error) {
         console.error('Manual password rotation failed:', error)
@@ -167,3 +103,86 @@ export async function POST(request: NextRequest) {
         )
     }
 }
+
+async function handlePasswordRotation(
+    adminData: { id: string; email: string; role: string },
+    sendEmail: boolean,
+    customRecipients: string[] | undefined,
+    supabaseService: ReturnType<typeof getSupabaseServiceClient>
+) {
+    console.log(`Manual password rotation triggered by: ${adminData.email}`)
+
+    // Generate a new secure password
+    const newPassword = generateSecurePassword({
+        length: 16,
+        includeUppercase: true,
+        includeLowercase: true,
+        includeNumbers: true,
+        includeSymbols: true,
+    })
+
+    // Update password in database
+    const { error: updateError } = await supabaseService.rpc('update_site_password', {
+        new_password: newPassword,
+        admin_user_id: adminData.id
+    })
+
+    if (updateError) {
+        console.error('Failed to update password:', updateError)
+        return NextResponse.json(
+            { error: 'Failed to update password', details: updateError.message },
+            { status: 500 }
+        )
+    }
+
+    // Calculate next rotation date
+    const now = new Date()
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+    let emailSent = false
+    let emailError: string | undefined
+
+    // Send notification emails if requested
+    if (sendEmail) {
+        const recipients = customRecipients || PASSWORD_RECIPIENTS
+        const emailResult = await sendPasswordNotification(
+            recipients,
+            newPassword,
+            nextMonth
+        )
+
+        emailSent = emailResult.success
+        if (!emailResult.success) {
+            emailError = emailResult.error
+            console.error('Email notification failed:', emailError)
+        }
+    }
+
+    // Log the action
+    try {
+        await supabaseService.from('audit_log').insert({
+            action: 'site_password_manual_rotation',
+            actor_email: adminData.email,
+            details: {
+                email_sent: emailSent,
+                email_error: emailError,
+                recipients: sendEmail ? (customRecipients || PASSWORD_RECIPIENTS) : [],
+            },
+            created_at: new Date().toISOString(),
+        })
+    } catch (auditError) {
+        console.warn('Failed to log audit event:', auditError)
+    }
+
+    return NextResponse.json({
+        success: true,
+        password: newPassword,
+        emailSent,
+        emailError,
+        recipients: sendEmail ? (customRecipients || PASSWORD_RECIPIENTS) : [],
+        rotatedBy: adminData.email,
+        nextRotation: nextMonth.toISOString(),
+        timestamp: new Date().toISOString(),
+    })
+}
+
