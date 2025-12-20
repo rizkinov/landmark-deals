@@ -4,83 +4,83 @@
  */
 
 interface EmailOptions {
-    to: string | string[]
-    subject: string
-    html: string
-    text?: string
+  to: string | string[]
+  subject: string
+  html: string
+  text?: string
 }
 
 interface EmailResult {
-    success: boolean
-    error?: string
-    id?: string
+  success: boolean
+  error?: string
+  id?: string
 }
 
 /**
  * Send email using Resend API
  */
 export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
-    const apiKey = process.env.RESEND_API_KEY
+  const apiKey = process.env.RESEND_API_KEY
 
-    if (!apiKey) {
-        console.error('RESEND_API_KEY is not configured')
-        return { success: false, error: 'Email service not configured' }
+  if (!apiKey) {
+    console.error('RESEND_API_KEY is not configured')
+    return { success: false, error: 'Email service not configured' }
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM_EMAIL || 'Landmark Deals <noreply@resend.dev>',
+        to: Array.isArray(options.to) ? options.to : [options.to],
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error('Email send failed:', errorData)
+      return {
+        success: false,
+        error: errorData.message || `HTTP ${response.status}`
+      }
     }
 
-    try {
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                from: process.env.RESEND_FROM_EMAIL || 'Landmark Deals <noreply@resend.dev>',
-                to: Array.isArray(options.to) ? options.to : [options.to],
-                subject: options.subject,
-                html: options.html,
-                text: options.text,
-            }),
-        })
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            console.error('Email send failed:', errorData)
-            return {
-                success: false,
-                error: errorData.message || `HTTP ${response.status}`
-            }
-        }
-
-        const data = await response.json()
-        return { success: true, id: data.id }
-    } catch (error) {
-        console.error('Email send exception:', error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        }
+    const data = await response.json()
+    return { success: true, id: data.id }
+  } catch (error) {
+    console.error('Email send exception:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
     }
+  }
 }
 
 /**
  * Send site access password notification email
  */
 export async function sendPasswordNotification(
-    recipients: string[],
-    password: string,
-    expiresAt?: Date
+  recipients: string[],
+  password: string,
+  expiresAt?: Date
 ): Promise<EmailResult> {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://landmark-deals.vercel.app'
-    const expiryText = expiresAt
-        ? `This password is valid until ${expiresAt.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        })}.`
-        : 'This password will be rotated on the 1st of next month.'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://landmark-deals.vercel.app'
+  const expiryText = expiresAt
+    ? `This password is valid until ${expiresAt.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}.`
+    : 'This password will be rotated on the 1st of next month.'
 
-    const html = `
+  const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -176,7 +176,7 @@ export async function sendPasswordNotification(
 </html>
   `.trim()
 
-    const text = `
+  const text = `
 CBRE Capital Markets - Landmark Deals
 
 🔐 New Site Access Password
@@ -196,19 +196,24 @@ This is an automated message from CBRE Capital Markets - Landmark Deals.
 © ${new Date().getFullYear()} CBRE. All rights reserved.
   `.trim()
 
-    return sendEmail({
-        to: recipients,
-        subject: '🔐 Landmark Deals - New Site Access Password',
-        html,
-        text,
-    })
+  return sendEmail({
+    to: recipients,
+    subject: '🔐 Landmark Deals - New Site Access Password',
+    html,
+    text,
+  })
 }
 
 /**
  * List of password recipients
  * These emails will receive the new password when it's rotated
+ * 
+ * NOTE: Until a domain is verified in Resend, emails can only be sent
+ * to the Resend account owner's email address.
+ * Once verified, add Christy.Chan@cbre.com back to this list.
  */
 export const PASSWORD_RECIPIENTS = [
-    'rizki.novianto@cbre.com',
-    'Christy.Chan@cbre.com',
+  'rizki.novianto@cbre.com',
+  // 'Christy.Chan@cbre.com', // Uncomment after domain verification in Resend
 ]
+

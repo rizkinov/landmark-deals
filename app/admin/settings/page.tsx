@@ -413,14 +413,13 @@ export default function AdminSettingsPage() {
                 Email Recipients
               </label>
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2">
                   <EnvelopeClosedIcon className="w-4 h-4 text-gray-500" />
                   <span>rizki.novianto@cbre.com</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <EnvelopeClosedIcon className="w-4 h-4 text-gray-500" />
-                  <span>Christy.Chan@cbre.com</span>
-                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Note: Additional recipients can be added after domain verification in Resend.
+                </p>
               </div>
             </div>
 
